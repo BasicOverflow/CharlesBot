@@ -1,8 +1,0 @@
-{
-    "video_file_root_path":"C:/Users/Peter/Desktop/video_archive",
-    "audio_file_root_path":"C:/Users/Peter/Desktop/audio_archive",
-    "api_ip":"10.0.0.129",
-    "api_port": 8004,
-    "intent_classifier_dir":"C:/Users/Peter/Desktop/Charles-MarkVII/code/api/backend/intent_classification",
-    "deepspeech-root":"C:/Users/Peter/Desktop/Charles-MarkVII/code/api/backend/speech_synthesis"
-}
