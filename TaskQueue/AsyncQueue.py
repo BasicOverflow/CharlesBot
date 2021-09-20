@@ -116,19 +116,6 @@ class AsyncQueue(object):
             async def ws_wrapper(*args,**kwargs):
                 try:
                     async with websockets.connect(client_url, ping_interval=None) as ws:
-                        # if not feature_obj.inquire: #if the feature's function does not take in ws as param and its a onetime send,
-                        #     #send initial results from function to client
-                        #     results = await func(*args, **kwargs)
-                        #     if results is None:
-                        #         results = "Command Completed"
-                        #     # if (results := await func(*args, **kwargs)) is None:
-                        #     #     results = "command completed"
-                        #     #send results to client
-                        #     await ws.send(str(results))
-                        #     #wait for client's response
-                        #     response = await ws.recv()
-                        #     await ws.send("Command Completed")
-                        # else: #if the func takes it in, just run it and the sends and recv's will be run in the func
                         await func(*args, ws, **kwargs) #assumes the ws_connection is the last argument in the function's defenition
                 except Exception as e:
                     print(f"{Fore.RED}WS CLIENT ERROR: {Fore.WHITE}{str(e)}")
