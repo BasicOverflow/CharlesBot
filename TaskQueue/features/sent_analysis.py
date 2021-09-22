@@ -1,4 +1,5 @@
 import asyncio
+import json
 import tweepy
 import textblob
 import pandas as pd
@@ -14,11 +15,12 @@ TIMEGAP = 7
 start = (datetime.datetime.now() - datetime.timedelta(days = TIMEGAP)).strftime("%Y-%m-%d")
 end = datetime.datetime.now().strftime("%Y-%m-%d")
 
-api_key = "KMyYZjYjQTJ9li9h1VgQeidr8"
-api_secret = "W5h9h8UstWMgO40rmc7qEKHr9F7JcVyg5i18a3XKJHgMOT9WnZ"
-bearer_token = "AAAAAAAAAAAAAAAAAAAAAHqSQgEAAAAAkmWJy6DElxWPtspaPh198MDGaiE%3DrQTLexL4ULGq8gADpzCtI7vKyY5IIDD3QN1w4thGgVlMO35T8E"
-access_token = "1402019793994145792-To2y9LPiFUBpa0XfzH96GV7rKa2EUt"
-access_token_secret = "RvwFt1P4KFDmvvLNFGZJ94wFD7X7Q17VvoRu3fQaaSpQ3"
+
+api_key = json.load(open("./settings.json", "r"))["video_file_root_path"]
+api_secret = json.load(open("./settings.json", "r"))["video_file_root_path"]
+bearer_token = json.load(open("./settings.json", "r"))["video_file_root_path"]
+access_token = json.load(open("./settings.json", "r"))["video_file_root_path"]
+access_token_secret = json.load(open("./settings.json", "r"))["video_file_root_path"]
 
 authenticator = tweepy.OAuthHandler(api_key, api_secret)
 authenticator.set_access_token(access_token, access_token_secret)
@@ -29,7 +31,7 @@ api = tweepy.API(authenticator, wait_on_rate_limit=True)
 def pull_tweets(topic):
     global api, start, end
     topic = f"#{topic} -filter:retweets"
-    cursor = tweepy.Cursor(api.search, q=topic, lang="en", tweet_mode="extended", until=end, since=start).items(1000)
+    cursor = tweepy.Cursor(api.search, q=topic, lang="en", tweet_mode="extended", until=end, since=start).items(100)
     tweets = [tweet.full_text for tweet in cursor]
     tweets_df = pd.DataFrame(tweets, columns=["Tweets"])
 
