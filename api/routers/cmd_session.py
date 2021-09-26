@@ -7,8 +7,8 @@ from colorama import Fore
 #For colored text
 colorama.init(autoreset=True)
 
-router = APIRouter()
 
+router = APIRouter()
 
 #functions to display command_session messages
 def print_client(msg, _id):
@@ -29,6 +29,7 @@ async def queue_to_API(websocket: WebSocket, command_id: str):
     Repeats for the entirety of session'''
     await websocket.app.manager.connect(websocket)
     cmd_session = await websocket.app.command_sess_manager.connect(command_id, client=False)
+
     try:
         while True:
             #get queue's response
@@ -36,12 +37,14 @@ async def queue_to_API(websocket: WebSocket, command_id: str):
             print_queue(queueMsg, command_id)
             #give to cmd_session manager, obtains clients response as dict
             resp = await cmd_session.notify_ws_event_queue(queueMsg)
+
             #if response says to disconnect, 
             if resp["msg"] == "disconnect":
                 # disconnect from manager
                 await websocket.app.command_sess_manager.disconnect(command_id)
                 # Disconnect entire endpoint
                 raise WebSocketDisconnect
+
             #else, send to queue
             await websocket.send_text(resp["msg"])
             
@@ -62,21 +65,26 @@ async def client_to_API(websocket: WebSocket, client_name: str):
         client_host = f"{websocket.client.host}:{str(websocket.client.port)}"
         client_id = f"{client_name}-{client_host}"
         await websocket.app.manager.connect(websocket) #raises ws disconnect if duplicate incoming machine found
+
         while True:
             # NOTE: the first inquery by client will already be present,so this endpoint will start out waiting for a change in db
             #obtain command session id: 
             command_id = await websocket.app.command_sess_manager.find_id(client_id)
             # print(f"(client) found command id: {command_id}")
+
             #add special attribute to ws object so other endpoints can identify it (only applies to cmd_sesion webscokets for now)
             websocket.cmd_id = command_id
+
             #connect to command session (will wait until one is found)
             cmd_session = await websocket.app.command_sess_manager.connect(command_id, client=True)
+
             try:
                 #listen in on change stream for any new queue posts
                 pipeline = [
                     {'$match': {'documentKey._id': command_id}},
                     {'$match': {"operationType": "update"}},
                     {'$match': {'$and': [{ "updateDescription.updatedFields.conversation": { '$exists': True } },{ "operationType": 'update'}]}}] 
+                
                 #listen in on stream with the above conditions
                 async with websocket.app.mongo_collection.watch(pipeline) as change_stream:    
                     async for change in change_stream:
@@ -91,17 +99,21 @@ async def client_to_API(websocket: WebSocket, client_name: str):
                         #send it to client, then break out of change stream
                         await websocket.send_text(new_msg)
                         break 
+
                 while True:
                     #waits to receive response from client
                     client_resp = await websocket.receive()
                     print_client(client_resp, command_id)
+                    
                     #give to cmd_session manager, obtain queue's response as dict
                     resp = await cmd_session.notify_ws_event_client(client_resp)
+                    
                     #check for disconnect msg 
                     if resp["msg"] == "disconnect":
                         #NOTE: when sending disconnect, _id holds the actual msg from queue
                         await websocket.send_text(resp["_id"])
                         break
+                    
                     #otherwise, continue
                     await websocket.send_text(resp["msg"])
                 
