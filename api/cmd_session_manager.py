@@ -78,6 +78,7 @@ class CommandSession(object):
         self.db_cursor = db_cursor
         self.client_connected: bool = False #Will get updated upon their connection 
         self.queue_connected: bool = False #Will get updated upon their connection 
+
         # The post that ship_commnad makes to init the session in mongodb
         self.post = {
             "_id": self.session_id, #command id will also be the post's oid in the db
@@ -88,6 +89,7 @@ class CommandSession(object):
                 { "source":"client", "content":self.command["args"][1] }
             ]
         }
+
         self.make_origin_post()
 
     def make_origin_post(self):
@@ -97,17 +99,22 @@ class CommandSession(object):
     async def connect_client(self):
         '''Return self so endpoint has access to the below methods'''
         self.client_connected = True
+
         return self
 
     async def connect_queue(self):
         self.queue_connected = True
+
         return self
 
     async def notify_ws_event_queue(self, msg: str) -> Dict:
         '''Endpoint calls this when it receives a ws response from queue. Waits and returns response from client'''
+
         # Obtain db's session post
         cmdSession = await self.db_cursor.find_one({"_id":self.session_id})
+
         # print(f"(queue) Found session: {cmdSession}")
+
         #Check to see if the ws message received is a disconnect (Indicating end of session or error)
         if type(msg) != type("d") or "{" in msg:
             try:
@@ -125,19 +132,24 @@ class CommandSession(object):
                             } 
                     ) 
                 # print(f"(queue) added terminating message to mongodb convo")
+
         #Update conversation in db 
         convo = cmdSession["conversation"]
         convo.append( { "source":"queue", "content":msg } )
+
         await self.db_cursor.update_one( {"_id":self.session_id}, {"$set": {"conversation": convo}} ) 
         # print(f"(queue) added the message to mongodb convo")
+
         # Check to see if queue is terminating session
         if "command completed" in msg.lower(): #Then the queue is done and session needs to end
             #disconnect from manager by returning 'disconnect' code
             return {"msg":"disconnect", "_id":self.session_id}
-        # otherwise, continue
+
         # print(f"(queue) waiting for client response")
+
         #create change stream to listen for a client msg addition to the conversation array
         pipeline = produce_pipeline(self.session_id)
+
         #listen in on stream with the above pipeline
         async with self.db_cursor.watch(pipeline) as change_stream:    
             async for change in change_stream:
@@ -145,6 +157,7 @@ class CommandSession(object):
                 conversation = change["updateDescription"]["updatedFields"]["conversation"]
                 if conversation[-1]["source"] == "queue": #if, for some reason, the change stream picked up something from the queue, ignore it
                     continue #this endpoint only wants client responses
+
                 #grab most recent message object from array and pull the actual messages out
                 new_msg = conversation[-1]["content"] 
                 #send it to queue, then break out of change stream
@@ -171,15 +184,18 @@ class CommandSession(object):
                         } 
                 ) 
             return { "msg":"disconnect","_id":self.session_id }
-        # continue if all good
-        # print(f"(client) received client response: {msg}")        
+        # print(f"(client) received client response: {msg}")    
+            
         #Update conversation in db 
         convo = cmdSession["conversation"]
         convo.append( {"source":"client", "content":msg } )
         await self.db_cursor.update_one( {"_id":self.session_id}, {"$set": {"conversation": convo}} ) 
+
         # print(f"(client) added the message to mongodb convo")
+
         #wait for queue response
         new_msg = ""
+
         #listen in on change stream for any new db posts
         async with self.db_cursor.watch(produce_pipeline(self.session_id)) as change_stream:    
             async for change in change_stream:
@@ -187,6 +203,7 @@ class CommandSession(object):
                 conversation = change["updateDescription"]["updatedFields"]["conversation"]
                 if conversation[-1]["source"] == "client": #if, for some reason, the change stream picked up something from the client, ignore it
                     continue #this endpoint only wants queue responses
+                
                 #grab most recent message object from array and pull the actual message out
                 new_msg = conversation[-1]["content"] 
                 # print(f"(client) found new msg from queue: {new_msg} | sending to client")

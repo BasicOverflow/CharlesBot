@@ -6,7 +6,7 @@ import json
 #To resolve some stupid import from features issue I dont fully know about^
 import sys, os
 sys.path.append(f"{os.getcwd()}/TaskQueue")
-from features.feature import Feature
+from .features.feature import Feature
 
 #root dir
 video_directory = json.load(open("./settings.json", "r"))["video_file_root_path"]

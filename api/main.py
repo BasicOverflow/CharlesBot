@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import List, Dict
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
-from uuid import uuid4 #for generating command ID's
+from uuid import uuid4 
 import concurrent.futures
 #Dependancies
 from ws_manager import ConnectionManager
@@ -42,6 +42,7 @@ def ship_command(self, raw_str, client_id):
         #send it to endpoint that runs the raw string through intent classifer and sends back JSON body
         classification = query_intent(raw_str)
         # print(classification)
+
         if "unknown" in classification[1]: #that means the classifier did not understand the command and didnt produce an intent
             print(f"Charles dont understand you idiot: {classification}")
             return False
@@ -49,17 +50,23 @@ def ship_command(self, raw_str, client_id):
             token = f"{uuid4()}".split("-")[0] #takes first part of a generated rand token
             client_ip = client_id.split("-")[1]
             command_id = f"{token}-{client_ip}"
+
             #construct a proper command request body to ship to queue
             command = Command(func_name=classification[1], args=[client_id, raw_str], kwargs={}, command_id=command_id, client_id=client_id) #Create Command basemodel
+            
             #construct a live command session object
             session = CommandSession(command_id, app.mongo_collection, command.dict())
+            
             #add it to manager
             app.command_sess_manager.add_session(session)
             # print(f"Posted {post}")
+           
             #ship it to pending_commands to be received by queue
             app.pending_commands.append(command)
+
             # print(pending_commands)
             return True
+
     return False
 
 
@@ -72,6 +79,7 @@ async def manual_ship(request: Request, client_name: str, raw_cmd: str):
     '''Perform the task in a threaded mannner to avoid blocking. FastAPI's background tasks do not work'''
     client_host = f"{request.client.host}:{str(request.client.port)}"
     client_id = f"{client_name}-{client_host}"
+
     with concurrent.futures.ThreadPoolExecutor() as executor: 
         future = executor.submit(app.ship_command, raw_cmd, client_id)
         result = future.result()
@@ -114,7 +122,6 @@ async def test():
 app.include_router(client_data)
 app.include_router(cmd_session)
 app.include_router(queue_coms)
-
 
 origins = ["*"]
 

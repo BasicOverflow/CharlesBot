@@ -135,6 +135,7 @@ class AsyncQueue(object):
 
             return ws_wrapper
         return ws_decorator
+        
 
     def add_task(self,command,feature_object):
         '''Takes the task to be constructed from the command and wraps it in a ws client before inserting it into event loop'''

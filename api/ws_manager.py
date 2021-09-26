@@ -8,19 +8,7 @@ class ConnectionManager:
         self.active_connections: List[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
-        # check to see if a cmd session websocket with duplicate ip is already present, if so, deny connection
-        # incoming_ws_url = str(websocket.url)
-        # for ws in self.active_connections:
-        #     url = ws.url
-        #     #Locate command session clients:
-        #     if "CommandSessionClient" in incoming_ws_url:
-        #         if "CommandSessionClient" in (cur_ws_name := str(ws.url)):
-        #             incoming_client_name = incoming_ws_url.split("CommandSessionClient/")[-1]
-        #             cur_ws_name = cur_ws_name.split("CommandSessionClient/")[-1]
-        #             if cur_ws_name == incoming_client_name:
-        #                 #deny connection to avoid duplicates
-        #                 raise WebSocketDisconnect 
-
+        ''''''
         await websocket.accept()
         self.active_connections.append(websocket)
 
