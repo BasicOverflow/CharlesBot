@@ -39,5 +39,5 @@
 -Make name customizable; allow developer to implement something other than 'Charles'
 -Add a attribute to the `Feature` class to signify if it can be run on a lighter device, like a raspberry pi
     -Create functionality for CharlesBot to go into 'light mode' for when being hosted on something like a pi; only accept and run tasks that are not CPU intensive
-
+-Host CharelseBot Client on seperate repo
 
