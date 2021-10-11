@@ -9,6 +9,10 @@
 * The task queue works on the task and pipes back results to the client through the API in real time. A user can then see results and send followups directly back
 * The tech stack involves python's FastAPI, MongoDB change streams, react for the front end, and websockets for most communications through the API, so the system is inherently fast-performing 
 
+
+    ![Screenshot](figures/layout2.png)
+
+
 # Async Task Queue
 -The AsyncQueue itself starts out as a barebone, modular structure that the user can add 'modules' to.
 * These 'modules' are implemented as a `Feature` class
@@ -36,4 +40,4 @@
 -Add a attribute to the `Feature` class to signify if it can be run on a lighter device, like a raspberry pi
     -Create functionality for CharlesBot to go into 'light mode' for when being hosted on something like a pi; only accept and run tasks that are not CPU intensive
 
-![Screenshot](figures/layout2.png)
+
