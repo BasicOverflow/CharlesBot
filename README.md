@@ -7,7 +7,7 @@
 * Through the audio data or direct text (from a browser client), the user makes a request by asking charles something
 * Using a classifier model, Charlesbot recognizes when the user asks something and what they want done, and creates a formal request to pipe to the asynchronous task queue
 * The task queue works on the task and pipes back results to the client through the API in real time. A user can then see results and send followups directly back
-* The tech stack involves python's FastAPI, MongoDB change streams, react for the front end, and websockets for most communications through the API, so the system is inherently fast-performing 
+* The tech stack involves python's FastAPI, MongoDB change streams, react for the front end, and websockets for most communications through the API, allowing for high performance
 
 
     ![Screenshot](figures/layout2.png)
