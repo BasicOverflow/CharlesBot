@@ -36,8 +36,8 @@
 * Some tasks require the user and the host to talk back and forth until completion; the conversation is piped through the API and stored in a mongoDB replica set as a 'Conversation' document. 
 
 # Future Implementations
--Make name customizable; allow developer to implement something other than 'Charles'\n
--Add a attribute to the `Feature` class to signify if it can be run on a lighter device, like a raspberry pi\n
-    -Create functionality for CharlesBot to go into 'light mode' for when being hosted on something like a pi; only accept and run tasks that are not CPU intensive\n
--Host CharelseBot Client on seperate repo
+*Make name customizable; allow developer to implement something other than 'Charles'
+*Add a attribute to the `Feature` class to signify if it can be run on a lighter device, like a raspberry pi
+    *Create functionality for CharlesBot to go into 'light mode' for when being hosted on something like a pi; only accept and run tasks that are not CPU intensive
+*Host CharelseBot Client on seperate repo
 
