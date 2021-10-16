@@ -7,7 +7,7 @@
 * Through the audio data or direct text (from a browser client), the user makes a request by asking charles something
 * Using a classifier model, Charlesbot recognizes when the user asks something and what they want done, and creates a formal request to pipe to the asynchronous task queue
 * The task queue works on the task and pipes back results to the client through the API in real time. A user can then see results and send followups directly back
-* The tech stack involves python's FastAPI, MongoDB change streams, react for the front end, and websockets for most communications through the API, so the system is inherently fast-performing 
+* The tech stack involves python's FastAPI, MongoDB change streams, react for the front end, and websockets for most communications through the API, allowing for high performance
 
 
     ![Screenshot](figures/layout2.png)
@@ -36,10 +36,10 @@
 * Some tasks require the user and the host to talk back and forth until completion; the conversation is piped through the API and stored in a mongoDB replica set as a 'Conversation' document. 
 
 # Future Implementations
--Make name customizable; allow developer to implement something other than 'Charles'
--Add a attribute to the `Feature` class to signify if it can be run on a lighter device, like a raspberry pi
-    -Create functionality for CharlesBot to go into 'light mode' for when being hosted on something like a pi; only accept and run tasks that are not CPU intensive
-
+* Make name customizable; allow developer to implement something other than 'Charles'
+* Add a attribute to the `Feature` class to signify if it can be run on a lighter device, like a raspberry pi
+    * Create functionality for CharlesBot to go into 'light mode' for when being hosted on something like a pi; only accept and run tasks that are not CPU intensive
+* Host CharelseBot Client on seperate repo
 
 # Disclaimer
 * The project is nowhere near ready for users, it is still heavily under development
