@@ -41,3 +41,8 @@
     -Create functionality for CharlesBot to go into 'light mode' for when being hosted on something like a pi; only accept and run tasks that are not CPU intensive
 
 
+# Disclaimer
+* The project is nowhere near ready for users, it is still heavily under development
+* Outlined above is the end goal
+
+

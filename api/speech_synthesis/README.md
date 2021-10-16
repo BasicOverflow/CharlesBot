@@ -1,3 +1,3 @@
-# The code in this directory is not my own
+# Intent classifier code attributed to Mozilla 
 
 * Project Available [here](https://github.com/mozilla/DeepSpeech)
