@@ -42,7 +42,6 @@
 * Host CharelseBot Client on seperate repo
 
 # Disclaimer
-* The project is nowhere near ready for users, it is still heavily under development
-* Outlined above is the end goal
+* Project is still heavily under development
 
 
