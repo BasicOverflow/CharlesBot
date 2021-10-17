@@ -1,10 +1,19 @@
 # TODO
 
-## figure out how to package and ship mongo db for API
-## have a setup.py that user can run to initiate all the different servers, make sure everything is configured correctly, include
+* Package and Ship Mongo Replica Set
+* have a setup.py that user runs to initialize all the servers/apis, including:
 	* intent classifier 
 	* audio
 	* api
 	* task queue
-## consider making intent classifier and audio transcriber seperate servers instead of API directly hosting them
- 
+	* mongodb
+
+## To eliminate bottlenecking and spread the workload from the API:
+* Make intent classifier & Audio Transcriber seperate websocket servers
+	* Use websockets async library
+* Separate audio and video endpoints in client_data.py router
+* Make callbacks in the API routers
+
+## Ambitious goal:
+* Create nginx reverse proxy to send audio post requests directly to audio trascriber 
+* Transcriber then sends results live to API 
