@@ -7,6 +7,7 @@
 	* api
 	* task queue
 	* mongodb
+* Automate retraining of intent classifier upon initialization of new feature
 
 ## To eliminate bottlenecking and spread the workload from the API:
 * Make intent classifier & Audio Transcriber seperate websocket servers
