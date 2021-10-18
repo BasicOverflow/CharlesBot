@@ -10,7 +10,7 @@ import concurrent.futures
 #Dependancies
 from ws_manager import ConnectionManager
 from cmd_session_manager import CommandSessionManager, CommandSession
-from intent_classification.classifier import query_intent
+from intent_classification.classifier import IntentClassifier
 #routers
 from routers.client_data import router as client_data
 from routers.cmd_session import router as cmd_session
@@ -24,6 +24,9 @@ settings = json.load(open("./settings.json","r"))
 app.manager = ConnectionManager()
 #in-mem db that is used to load commands into so they can be shipped to queue
 app.pending_commands = []
+
+model = IntentClassifier()
+model.load()
 
 
 #Base model for constructing & visualizing command Requests that are sent to the AsyncQueue
@@ -40,7 +43,7 @@ def ship_command(self, raw_str, client_id):
     #Check if the phrase is a command
     if "charles" in raw_str.lower(): #then it is a command, ship it to proper endpoint
         #send it to endpoint that runs the raw string through intent classifer and sends back JSON body
-        classification = query_intent(raw_str)
+        classification = model.query_intent(raw_str)
         # print(classification)
 
         if "unknown" in classification[1]: #that means the classifier did not understand the command and didnt produce an intent

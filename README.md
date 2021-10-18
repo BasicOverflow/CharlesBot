@@ -1,7 +1,7 @@
 # TODO
 
 * Package and Ship Mongo Replica Set
-* have a setup.py that user runs to initialize all the servers/apis, including:
+* have a `setup.py` that user runs to initialize all the servers/apis, including:
 	* intent classifier 
 	* audio
 	* api
