@@ -1,13 +1,13 @@
 {
-    "video_file_root_path":"C:/Users/Peter/Desktop/video_archive",
-    "audio_file_root_path":"C:/Users/Peter/Desktop/audio_archive",
-    "api_ip":"10.0.0.129",
-    "api_port": 8004,
-    "intent_classifier_dir":"C:/Users/Peter/Desktop/CharlesBot/api/intent_classification",
-    "deepspeech-root":"C:/Users/Peter/Desktop/CharlesBot/api/backend/speech_synthesis",
-    "api_key":"KMyYZjYjQTJ9li9h1VgQeidr8",
-    "api_secret":"W5h9h8UstWMgO40rmc7qEKHr9F7JcVyg5i18a3XKJHgMOT9WnZ",
-    "bearer_token":"AAAAAAAAAAAAAAAAAAAAAHqSQgEAAAAAkmWJy6DElxWPtspaPh198MDGaiE",
-    "access_token":"1402019793994145792-To2y9LPiFUBpa0XfzH96GV7rKa2EUt",
-    "access_token_secret":"RvwFt1P4KFDmvvLNFGZJ94wFD7X7Q17VvoRu3fQaaSpQ3"
+    "video_file_root_path":"Folder for video to be archived",
+    "audio_file_root_path":"Folder for audio to be archivede",
+    "api_ip":"",
+    "api_port": "integer",
+    "intent_classifier_dir":"folder to host classifier model",
+    "deepspeech-root":"folder to host speech-text model",
+    "api_key":"twitter creds",
+    "api_secret":"twitter creds",
+    "bearer_token":"twitter creds",
+    "access_token":"twitter creds",
+    "access_token_secret":"twitter creds"
 }
