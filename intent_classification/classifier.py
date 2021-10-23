@@ -52,6 +52,11 @@ class IntentClassifier(object):
         self.current_intent = tag
 
     
+    def query_mappings(self):
+        self.mappings = json.load(open(f"{self.classifier_dir}/model/mappings.json", "r"))
+        return self.mappings
+
+    
     def query_intent(self, msg):
         '''Edits current global variable to whatever intent the message entered wants, yields the message'''
         self.assistant.request(msg)
@@ -75,10 +80,6 @@ if __name__ == "__main__":
     print(testModel.query_intent("perform test websocket connection with client"))
     print(testModel.query_intent("perform system diagnostics"))
 
-
-
-
-    #TODO:  #include monitoring of mappings and retraing 
 
 
 
