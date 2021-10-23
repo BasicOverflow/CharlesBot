@@ -4,7 +4,6 @@ from websockets.exceptions import ConnectionClosedOK, ConnectionClosed
 from classifier import IntentClassifier
 
 
-# server needs to monitor mappings.json and look for changes, if found, retrain the model and put any incoming requests on hold
 
 #init model  
 classifier = IntentClassifier()
@@ -13,15 +12,15 @@ classifier.load()
 
 #Coroutine to monitor dataset and retrain
 async def monitor_dataset():
-    prev_mappings = classifier.query_mappings()
+    prev_dataset = classifier.query_dataset()
     while True:
-        curr_mappings = classifier.query_mappings()
+        curr_dataset = classifier.query_dataset()
 
-        if curr_mappings != prev_mappings:
+        if curr_dataset != prev_dataset:
             #retrain
             print("Retraining...")
             classifier.retrain()
-            prev_mappings = curr_mappings
+            prev_dataset = curr_dataset
 
         await asyncio.sleep(0.1)
 

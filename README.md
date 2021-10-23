@@ -1,7 +1,7 @@
 # TODO
 
 
-* seperate intent & audio models into seperate directories
+* seperateaudio model into seperate directory
 * make requirments.txt for pip modules
 * Package and Ship Mongo Replica Set
 * have a `setup.py` that user runs to initialize all the servers/apis, including:
@@ -10,7 +10,6 @@
 	* api
 	* task queue
 	* mongodb
-* Automate retraining of intent classifier upon initialization of new feature
 
 ## To eliminate bottlenecking and spread the workload from the API:
 * Make intent classifier & Audio Transcriber seperate websocket servers

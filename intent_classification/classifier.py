@@ -39,6 +39,10 @@ class IntentClassifier(object):
             # mappings[key] = lambda: update(val)
             self.mappings[key] = decorator(val)(self.update)
 
+
+        self.assistant = GenericAssistant(f'{self.classifier_dir}/model/intents.json', self.mappings, "Charles3.0")
+        self.load()
+
         self.assistant.train_model()
         self.assistant.save_model()
 
@@ -52,9 +56,10 @@ class IntentClassifier(object):
         self.current_intent = tag
 
     
-    def query_mappings(self):
+    def query_dataset(self):
         self.mappings = json.load(open(f"{self.classifier_dir}/model/mappings.json", "r"))
-        return self.mappings
+        intents = json.load(open(f"{self.classifier_dir}/model/intents.json", "r"))
+        return (self.mappings, intents)
 
     
     def query_intent(self, msg):
