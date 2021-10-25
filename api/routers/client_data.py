@@ -71,6 +71,7 @@ def produce_pipeline(session_id):
     return [{'$match': {'documentKey._id': session_id}},{'$match': {"operationType": "update"}},{'$match': {'$and': [{ "updateDescription.updatedFields.conversation": { '$exists': True } },{ "operationType": 'update'}]}}]
 
 
+
 @router.websocket("/ws/video/{client_name}")
 async def ws_video_endpoint(websocket: WebSocket, client_name: str):
     '''Opens up ws connection with client who streams live video feed. Archives feed by hour-long mp4 files'''
