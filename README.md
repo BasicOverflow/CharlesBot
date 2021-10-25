@@ -12,6 +12,9 @@
 	* mongodb
 
 ## To eliminate bottlenecking and spread the workload from the API:
+* Make intent classifier & Audio Transcriber seperate websocket servers
+	* edit `neuralintents.py` to make methods asynchronous and optimized to work in a server, add in multiprocessing
+	* Use websockets async library
 * Separate audio and video endpoints in client_data.py router
 * Make callbacks in the API routers
 
