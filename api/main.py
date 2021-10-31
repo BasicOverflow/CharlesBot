@@ -12,7 +12,8 @@ from ws_manager import ConnectionManager
 from cmd_session_manager import CommandSessionManager, CommandSession
 from intent_classification.classifier import IntentClassifier
 #routers
-from routers.client_data import router as client_data
+from routers.client_video import router as client_video
+from routers.client_audio import router as client_audio
 from routers.cmd_session import router as cmd_session
 from routers.queue_coms import router as queue_coms
 
@@ -122,7 +123,8 @@ async def test():
 
      
    
-app.include_router(client_data)
+app.include_router(client_audio)
+app.include_router(client_video)
 app.include_router(cmd_session)
 app.include_router(queue_coms)
 

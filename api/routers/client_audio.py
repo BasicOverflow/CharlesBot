@@ -64,6 +64,7 @@ def produce_pipeline(session_id):
     return [{'$match': {'documentKey._id': session_id}},{'$match': {"operationType": "update"}},{'$match': {'$and': [{ "updateDescription.updatedFields.conversation": { '$exists': True } },{ "operationType": 'update'}]}}]
 
 
+#TODO: Clean up this horrifying endpoint
 @router.websocket("/ws/audio/{client_name}")
 async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
     '''Opens up ws connection with client who streams live audio feed. Archives feed by hour-long txt files. For each phrase received, checks to see if it could be a command.
