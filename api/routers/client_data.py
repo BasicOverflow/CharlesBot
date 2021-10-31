@@ -17,7 +17,6 @@ sys.path.append(f"{os.getcwd()}/api/backend/speech_synthesis")
 import deepspeech
 import collections
 import os.path
-import deepspeech
 from halo import Halo
 from webthing import webrtcvad
 from mic_vad_streaming import VADAudio, DEFAULT_SAMPLE_RATE, BLOCKS_PER_SECOND
