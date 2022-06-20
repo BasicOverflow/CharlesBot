@@ -12,16 +12,16 @@ from starlette.websockets import WebSocketDisconnect
 
 router = APIRouter()
 #Directory to store video data
-video_file_path = None #TODO: import from settings.py
+video_file_path = "c:/Users/Peter/Desktop/" #TODO: import from settings.py
 
 
 
 @router.websocket("/ws/video/{client_name}")
 async def ws_video_endpoint(websocket: WebSocket, client_name: str):
     '''Opens up ws connection with client who streams live video feed. Archives feed by hour-long mp4 files'''
-    await websocket.app.manager.connect(websocket)
+    #TODO: have client send video details in request body to dynamically take care of any framerate, pixel size, etc
 
-    client_host = f"{websocket.client.host}:{str(websocket.client.port)}"
+    await websocket.app.manager.connect(websocket)
 
     try:
 
@@ -60,8 +60,8 @@ async def ws_video_endpoint(websocket: WebSocket, client_name: str):
                     #Archive frame into file
                     out.write(data)
 
-        #Release write object
-        out.release()
+            #Release write object
+            out.release()
     
     except (WebSocketDisconnect, RuntimeError):
         websocket.app.manager.disconnect(websocket)
