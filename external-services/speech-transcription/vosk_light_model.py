@@ -25,8 +25,11 @@ async def serve(websocket, path):
             if recognizer.AcceptWaveform(frame):
                 text = recognizer.Result()
                 print(text[14: -3])
-                await websocket.send(text[14: -3]) 
-                continue
+
+                # Ensure model didnt just send out empty string as a phrase
+                if text.strip(" ") != "":  
+                    await websocket.send(text[14: -3]) 
+                    continue
 
             # if it doesn't and the current audio frame is in the middle of the construction of a phrase, send nothing back
             await websocket.send("")

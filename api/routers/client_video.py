@@ -10,7 +10,7 @@ from fastapi import APIRouter, WebSocket
 from starlette.websockets import WebSocketDisconnect
 
 
-router = APIRouter()
+router = APIRouter() 
 #Directory to store video data
 video_file_path = "c:/Users/Peter/Desktop/" #TODO: import from settings.py
 
