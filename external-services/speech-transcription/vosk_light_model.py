@@ -1,5 +1,4 @@
 # ASR dependencies
-from re import L
 from vosk import Model, KaldiRecognizer
 import pyaudio
 
