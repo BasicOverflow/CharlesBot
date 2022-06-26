@@ -1,0 +1,4 @@
+host_ip: '10.0.0.253'
+host_port: 8004
+video_storage_root_path: 'c/Users/Peter/Desktop'
+audio_storage_root_path: 'c/Users/Peter/Desktop'

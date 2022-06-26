@@ -1,3 +1,4 @@
+import yaml
 import wave
 import pathlib
 import pickle
@@ -9,10 +10,13 @@ from fastapi import APIRouter, WebSocket
 from starlette.websockets import WebSocketDisconnect
 
 
-
 router = APIRouter()
-#Directory to store audio data
-audio_file_path = "c:/Users/Peter/Desktop/" #TODO: import from settings.py
+
+ #api configuration settings
+settings = yaml.safe_load(open("../settings.yaml")) 
+
+#Directory to store video data
+audio_file_path = settings["audio_storage_root_path"]
 
 
 def open_wav(path):

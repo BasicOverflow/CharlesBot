@@ -1,8 +1,6 @@
 import uvicorn
-import json
-from fastapi import FastAPI#, Request
-# from pydantic import BaseModel
-# from typing import List, Dict
+import yaml
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 #Dependancies
@@ -17,7 +15,7 @@ from routers.client_audio import router as client_audio
 app = FastAPI()
 
 #api configuration settings
-# settings = json.load(open("./settings.json","r")) #TODO: change to .py file
+settings = yaml.safe_load(open("./settings.yaml")) 
 
 # websocket connection manager
 app.manager = ConnectionManager()
@@ -28,7 +26,7 @@ app.state.audio_frames = {} # holds { 'client_id' : str, 'frame' : Array[float] 
 # configure state for conversation 'frames'
 app.state.convo_phrases = {} # holds { 'client_id': str, 'phrase': str } 
 #TODO: add constraint to prevent duplicate client_id's. If the case, reject the request and send back appropriate error msg to client
-
+    #maybe have middleware check request and compare with app() state
 
 
 @app.get("/")
@@ -65,9 +63,11 @@ app.include_router(client_audio)
 if __name__ == "__main__":
     uvicorn.run(  
         "main:app",
-        host="10.0.0.253",
+        host=settings["host_ip"],
         reload=True,
-        port=8004
+        port=settings["host_port"]
     )
+
+    
 
 

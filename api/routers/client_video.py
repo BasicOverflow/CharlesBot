@@ -1,5 +1,4 @@
-from ast import Try
-import json
+import yaml
 import os
 import pathlib
 import pickle
@@ -11,8 +10,12 @@ from starlette.websockets import WebSocketDisconnect
 
 
 router = APIRouter() 
+
+ #api configuration settings
+settings = yaml.safe_load(open("../settings.yaml")) 
+
 #Directory to store video data
-video_file_path = "c:/Users/Peter/Desktop/" #TODO: import from settings.py
+video_file_path = settings["video_storage_root_path"]
 
 
 
