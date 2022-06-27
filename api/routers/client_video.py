@@ -13,9 +13,7 @@ router = APIRouter()
 
  #api configuration settings
 settings = yaml.safe_load(open("../settings.yaml")) 
-
-#Directory to store video data
-video_file_path = settings["video_storage_root_path"]
+video_file_path = settings["video_storage_root_path"] #Directory to store video data
 
 
 
@@ -54,8 +52,7 @@ async def ws_video_endpoint(websocket: WebSocket, client_name: str):
                 else: #archive the frame
                     data = cv2.imdecode(np.frombuffer(data, dtype='uint8'),cv2.IMREAD_COLOR)
                     #calc time gap between now and start_date
-                    now = datetime.now()
-                    gap = ((now-start_date).total_seconds())/60/60 #Returns time gap in hours
+                    gap = ((datetime.now()-start_date).total_seconds())/60/60 #Returns time gap in hours
 
                     #Check if gap has reached an hour, if so restart loop and start archiving into new file
                     if gap >= 1: break

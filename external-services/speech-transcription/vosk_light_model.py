@@ -1,14 +1,13 @@
-# ASR dependencies
-from vosk import Model, KaldiRecognizer
-import pyaudio
-
-# async server 
+import yaml
 import asyncio
 import websockets
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosed
+# ASR dependencies
+from vosk import Model, KaldiRecognizer
 
 
-model = Model(r"C:\Users\Peter\Desktop\CharlesBot-Current\external-services\speech-transcription\models\vosk-model-small-en-us-0.15") #light
+model_path = yaml.safe_load(open("./settings.yaml"))["asr_model_path"]
+model = Model(rf"{model_path}") #light
 recognizer = KaldiRecognizer(model, 16000)
 
 
@@ -38,8 +37,9 @@ async def serve(websocket, path):
         pass
 
 
+
 async def main():
-    async with websockets.serve(serve, "10.0.0.253", 8005):
+    async with websockets.serve(serve, "localhost", 8005):
         await asyncio.Future() # run forever
 
 
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
 
 # for testing on local mic
-
+# import pyaudio
 # mic = pyaudio.PyAudio()
 # stream = mic.open(
 #     format = pyaudio.paInt16,

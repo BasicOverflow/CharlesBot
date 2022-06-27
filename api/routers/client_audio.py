@@ -14,9 +14,7 @@ router = APIRouter()
 
  #api configuration settings
 settings = yaml.safe_load(open("../settings.yaml")) 
-
-#Directory to store video data
-audio_file_path = settings["audio_storage_root_path"]
+audio_file_path = settings["audio_storage_root_path"] #Directory to store audio data
 
 
 def open_wav(path):
@@ -43,7 +41,6 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
     websocket.app.state.audio_frames[client_id] = ""
 
     try:
-
         while True:
             # Init datetimes to keep track of time
             start_str = datetime.now().strftime('%m-%d-%Y %I-%M %p') #Readable string date
@@ -60,7 +57,7 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
 
             # Check if file exists
             if not os.path.isfile(file):
-                # Create file without opening it
+                # Create file 
                 open(file,"a").close()  
 
             # open write connection to curr wave file
@@ -83,8 +80,7 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
                 curr_dir.writeframesraw(websocket.app.state.audio_frames[client_id])
 
                 # calc how long we've been writing to current wav file
-                now = datetime.now()
-                gap = ((now-start_date).total_seconds())/60/60 #Returns time gap in hours
+                gap = ((datetime.now()-start_date).total_seconds())/60/60 #Returns time gap in hours
 
                 #Check if gap has reached an hour, if so restart loop and start archiving into new file
                 if gap >= 1: break
@@ -93,15 +89,16 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
             curr_dir.close()
 
     except (WebSocketDisconnect, RuntimeError) as e:
+        print(f"{Fore.GREEN}INFO:     Audio ws for {Fore.LIGHTBLACK_EX}{client_id} droppped: [{e}]")
+        
+    except Exception as e:
+        print(f"Unknown Error caused client {client_id} disconnect: {e}")
+
+    finally: 
+        del websocket.app.state.audio_frames[client_id] # destroy associated app() state
         curr_dir.close()
         websocket.app.manager.disconnect(websocket)
         
-    except Exception as e:
-        curr_dir.close()
-        websocket.app.manager.disconnect(websocket)
-
-    finally: 
-        print(f"{Fore.GREEN}INFO:     Audio ws for {Fore.LIGHTBLACK_EX}{client_name}-{client_host} droppped: [{e}]")
 
 
 
