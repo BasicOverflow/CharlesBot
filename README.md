@@ -18,7 +18,3 @@
 * Separate audio and video endpoints in client_data.py router
 * Make callbacks in the API routers
 
-
-## Ambitious goal:
-* Create nginx reverse proxy to send audio post requests directly to audio trascriber 
-* Transcriber then sends results live to API 
