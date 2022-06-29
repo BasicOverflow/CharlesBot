@@ -2,24 +2,19 @@ import sys, os
 sys.path.append(f"{os.getcwd()}/TaskQueue")
 #^To resolve some stupid import from features issue I dont fully know about^
 from AsyncQueue import AsyncQueue
-#import test feature
 from features.feature import test
-#import features from audio_stuff.py
 from features.audio_stuff import (
     audio_displayer,
     audio_keeper,
     audio_purger
 )
-#import features from video_stuff.py
 from features.video_stuff import (
     video_displayer,
     video_keeper,
     video_purger
 )
-#import other features:
 from features.sent_analysis import sentiment_analyzer
 from features.diagnostics import system_diagnostics
-
 
 
 #Create queue

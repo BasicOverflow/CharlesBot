@@ -1,10 +1,9 @@
 import asyncio
 import websockets
 import colorama
+import yaml
 import json
 from colorama import Fore
-from websockets import uri
-from websockets.exceptions import ConnectionClosedOK
 
 colorama.init(autoreset=True)
 
@@ -26,7 +25,7 @@ class AsyncQueue(object):
         self.event_trigger = False
         #Holds the actual function objects to be executed as cron jobs, these are constructed by incoming commands and reference Feature objects from self.features
         self.pending_tasks = []
-        self.api = json.load(open("settings.json", "r"))["api_ip"] + ":" + str(json.load(open("settings.json", "r"))["api_port"])
+        self.api = yaml.safe_load(open("../settings.yaml"))["host_ip"] + ":" + str(yaml.safe_load(open("../settings.yaml"))["host_port"])
         
 
     def init_async_loop(self):
@@ -38,10 +37,9 @@ class AsyncQueue(object):
 
         #Add methods that should always be in the event loop:
         self.coroutines.append(self.loop.create_task(self.monitor_loop_reset()))
-        self.coroutines.append(self.loop.create_task(self.ws_api_client("ws://10.0.0.129:8004/ws/queue")))
+        self.coroutines.append(self.loop.create_task(self.ws_api_client(f"ws://{self.api}/ws/queue")))
 
         print(f"{Fore.GREEN}Async Loop Started")
-
 
         #Init a loop that starts the async event loop until a reset event is triggered. This reset event stops the loop and allows a new one with additional coroutines to be started
         while True:
@@ -61,18 +59,17 @@ class AsyncQueue(object):
 
             #Once the above line terminates (due to reset trigger) all tasks being handled need to be terminated 
             for coro in self.coroutines:
-                coro.cancel() #upon cancelling, its not garunteed that all tasks that arent inifinte loops will be completed 
+                coro.cancel()
 
 
     async def monitor_loop_reset(self):
         '''This method actually triggers the reset of the asyncio event loop by calling loop.stop() upon 
-        monitoring an external source. In this case, the external source is continusously referencing an attribute to this class'''
+        monitoring an external source. In this case, the external source is the continuous referencing of an attribute to this class'''
         while True:
             if self.event_trigger: #If true, then a reset event will be triggered here and the event loop will reset.
                 
                 self.event_trigger = False #reset variable
-                #Stop the current event loop, which will cause a new one to be defined within self.init_async_loop
-                self.loop.stop()
+                self.loop.stop() #Stop the current event loop, which will cause a new one to be defined within self.init_async_loop
                 
                 print(f"{Fore.GREEN}Reset triggered")
 
@@ -87,7 +84,6 @@ class AsyncQueue(object):
             print(f"{Fore.GREEN}Queue Successfully Connected with API")
 
             while True:
-
                 #Contains information regarding incoming commands
                 command = await ws.recv()
                 command = json.loads(command)
@@ -99,7 +95,7 @@ class AsyncQueue(object):
                         feature_involved = feature_obj
                         break
 
-                #If no relevant feature was found (i.e func_involved remains null), notify someone
+                #If no relevant feature was found notify someone
                 if feature_involved == None:
                     #TODO: develop this further to let the client know, maybe by adding a task that just sends an error message to the client (this could be a feature)
                     print(f"{Fore.RED}No feature was found for this command: {Fore.WHITE}{command}")
@@ -112,7 +108,7 @@ class AsyncQueue(object):
                 self.trigger_loop_reset()
 
     
-    async def ws_api_client(self,uri):
+    async def ws_api_client(self, uri):
         '''A wrapper for the above method'''
         while True:
             try:
@@ -122,7 +118,7 @@ class AsyncQueue(object):
 
 
     def ws_duplex_comm_client(self,client_url):
-        '''Decorator that wraps a ws client around a given function to communicate results/further inqueries'''
+        '''Decorator that wraps a ws client around a given function to communicate results/further inqueries to api'''
         print(f"Creating ws: {client_url}")
 
         def ws_decorator(func):
@@ -139,9 +135,10 @@ class AsyncQueue(object):
 
     def add_task(self,command,feature_object):
         '''Takes the task to be constructed from the command and wraps it in a ws client before inserting it into event loop'''
-        command_id = command["command_id"]
-        client_url = f"ws://{self.api}/ws/commandSessionQueue/{command_id}"
+        client_id = command["client_id"]
+        client_url = f"ws://{self.api}/ws/queue_worker/{client_id}"
 
+        #TODO: clean this up, im pretty sure most of its not needed at all (i think)
         #Check the commands arguments and see if they match with the feature's arguments. Modify command["args"] accordingly
         if feature_object.func_params == []: #if the feature's function does not take in any arguments, then no arguments will be passed into the QueueTask
             command["args"] = []
@@ -158,7 +155,9 @@ class AsyncQueue(object):
             QueueTask(
                 (self.ws_duplex_comm_client(client_url, feature_object))(feature_object.run),
                 command["args"],
-                command["kwargs"]))
+                command["kwargs"]
+                )
+            )
 
 
     def trigger_loop_reset(self):

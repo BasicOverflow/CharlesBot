@@ -1,6 +1,5 @@
 from fastapi import WebSocket
 from typing import List
-from starlette.websockets import WebSocketDisconnect
 
 
 class ConnectionManager:
@@ -24,11 +23,3 @@ class ConnectionManager:
     async def broadcast(self, message: str):
         for connection in self.active_connections:
             await connection.send_text(message)
-
-    def find_cmd_client(self, cmd_id):
-        for ws in self.active_connections:
-            try:
-                if ws.cmd_id == cmd_id:
-                    return ws
-            except: pass
-        return None

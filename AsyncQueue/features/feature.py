@@ -11,14 +11,14 @@ import asyncio
         #imediately, declare a ws_handler.recv() under the send
         #repeat this as desired
 
-root_dir = json.load(open("./settings.json", "r"))["intent_classifier_dir"]
+root_dir = json.load(open("./settings.json", "r"))["intent_classifier_dir"] #TODO: convert to yaml
 
 
 class Feature(object):
-    '''A way to add a new peice of functionality to the AsyncQueue in as elegant/seamless way as possible.
+    '''A way to add a new peice of functionality to the AsyncQueue in an elegant/seamless way as possible.
     Info held: 
         # Intent info to add to classifier's intent.json (check to see if the intent has already been added, if so, dont write to the file)
-        # Any inqueries to follow up with client (list of strings)
+        # Any inqueries to follow up with client (list of strings) #TODO: <- not needed anymore
         # the function itself
         # the function's name'''
     def __init__(self,func,intents):

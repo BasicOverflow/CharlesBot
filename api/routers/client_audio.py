@@ -6,14 +6,14 @@ import os
 from datetime import datetime
 import colorama
 from colorama import Fore
-from fastapi import APIRouter, WebSocket
+from fastapi import APIRouter, WebSocket, HTTPException
 from starlette.websockets import WebSocketDisconnect
 
 
 router = APIRouter()
 
  #api configuration settings
-settings = yaml.safe_load(open("../settings.yaml")) 
+settings = yaml.safe_load(open("./settings.yaml")) 
 audio_file_path = settings["audio_storage_root_path"] #Directory to store audio data
 
 
@@ -36,6 +36,11 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
     # create identifier
     client_host = f"{websocket.client.host}:{str(websocket.client.port)}"
     client_id = f"{client_name}-{client_host}"
+
+    # Check if app state for this client already exists, if so, then the device is already connected and attempting a duplicate connection
+    if client_id in websocket.app.state.audio_frames.keys():
+        raise HTTPException(status_code = 409, detail = "Duplicate Connection found, rejecting") # reject the connection 
+    # TODO: this shouldnt work: https://stackoverflow.com/questions/71254130/fastapi-reject-a-websocket-connection-with-http-response
 
     #add state field for this client to app(), init value to null
     websocket.app.state.audio_frames[client_id] = ""

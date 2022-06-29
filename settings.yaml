@@ -7,3 +7,6 @@ asr_model_path: 'C:\Users\peter\Desktop\CharlesBot\external-services\speech-tran
 
 
 # current transcription model path
+# external ASR server port
+# external intent classifier port
+# intent_classifier_dir
