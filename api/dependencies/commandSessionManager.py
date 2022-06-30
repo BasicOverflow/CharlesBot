@@ -1,6 +1,9 @@
 from typing import Dict, List, Tuple, Union
 from pydantic import BaseModel
 from uuid import uuid4
+import asyncio
+
+from db_actions import *
 
 
 
@@ -17,16 +20,17 @@ class CommandSession():
     '''Holds information & status for the conversation between a client & async queue worker.
     Also Provides API to log all session info into document DB'''
     
-    def __init__(self, client_id: str, classification: Tuple[str, str], pending_commands: List) -> None:
+    def __init__(self, client_id: str, classification: Tuple[str, str], pending_commands: List, cursor: any) -> None:
         self.client_id = client_id
         self.pending_commands = pending_commands
+        self.cursor = cursor #mongodb client cursor binded to app()
         self.client_connected: bool = False
         self.async_worker_connected: bool = True
         self.session_ongoing: bool = True # indicates that conversation w/ client is still active
         self.session_id: str = str(uuid4()) # unique identifier for session
 
         # create document for session in db 
-        self.create_session_db_document()
+        asyncio.run( self.create_session_db_document(classification[0]) )
 
         # Create formal command request body using classification from intent classifier
         self.ship_formal_command(classification)
@@ -45,24 +49,35 @@ class CommandSession():
         self.pending_commands.append(command)
 
 
-    def create_session_db_document(self) -> None:
+    async def create_session_db_document(self, initial_phrase: str) -> None:
         '''Creates document object in db for the session'''
-        #TODO: also log initial client phrase
-        pass
+        # create conversation document
+        await create_convo_document(self.cursor, self.session_id)
+
+        # log initial client phrase
+        await self.log_client_phrase(initial_phrase)
 
 
     async def log_client_phrase(self, phrase: str) -> None:
-        pass
+        '''Log phrase that came from client'''
+        await log_conversation_piece(self.cursor, self.session_id, phrase, "client")
 
 
     async def log_worker_phrase(self, phrase: str) -> None:
-        pass
+        '''Log phrase that came from async worker'''
+        await log_conversation_piece(self.cursor, self.session_id, phrase, "queue")
 
 
     async def get_full_convo(self) -> List[Dict]:
-        '''Returns full conversation up until this moment in time'''
-        pass
+        '''Returns full conversation up until the current moment in time'''
+        convo = await pull_full_convo(self.cursor, self.session_id)
+        return convo
+
     
+    async def update_session_termination_db(self):
+        '''Updates db with session termination time & indicator that conversation is complete'''
+        await log_convo_termination(self.cursor, self.session_id)
+
 
     def __repr__(self) -> str:
         '''Convo will be a list of dict objects that represent individual phrases from client/worker'''
@@ -123,6 +138,7 @@ class CommandSessionManager():
         '''Makes command session inactive'''
         session = self.search_session(client_id)
         session.session_ongoing = False
+        session.update_session_termination_db() #updates mongodb document
         self.active_sessions.remove(session)
         self.inactive_sessions.append(session)
 

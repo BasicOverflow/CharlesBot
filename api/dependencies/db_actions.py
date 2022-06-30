@@ -5,7 +5,7 @@ from typing import Dict, List
 
 
 async def create_convo_document(cursor: any, session_id: str) -> None:
-    '''Creates an entire 'conversation' document object in the DB for the new CommandSession'''
+    '''Creates an new 'conversation' document object in the DB for a CommandSession'''
     post = {
             "_id": session_id, 
             "start_time": datetime.now(),

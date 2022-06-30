@@ -81,18 +81,19 @@ async def convo_text_browser(websocket: WebSocket, client_name: str):
 
             # Wait for new client followup #TODO: this might not work, test it 
             while (worker_resp := websocket.app.state.worker_phrases[client_id]) == prev_worker_resp: await asyncio.sleep(0.05)
-            prev_worker_resp = worker_resp
+            prev_worker_resp = worker_resp = websocket.app.state.worker_phrases[client_id]
 
             # send new worker response to client
             await websocket.send_text(worker_resp)
 
     except (WebSocketDisconnect, ConnectionClosedError):
+        #TODO: add logic to shut down command session
         websocket.app.manager.disconnect(websocket)
         print(f"Conversational text endpoint for client {client_id} disconnected")
 
 
 
-#TODO: later on, add logic to handle the end of a command session
+#TODO: later on, add logic to handle the end of a command session and restart
     # this involves disconnecting the current command session object, restarting logic from the top, 
     # and starting a brand new session object
     # we will also need to disconnect the associate async worker for every session and have a new one join
