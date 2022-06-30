@@ -33,18 +33,42 @@ async def convo_text(websocket: WebSocket, client_name: str):
 async def convo_text_browser(websocket: WebSocket, client_name: str):
     '''Receives inqueries from client, updates app() state, then waits for new response from async worker by looking at other app() state. Designed for browser-clients'''
     await websocket.app.manager.connect(websocket)
-
-    #TODO: here, we assume that any text sent by the client is relevant to fufilling a command
-        # when not in command session, have different logic to receive the next incoming phrase, and check if its a valid command
-        # if so, ship it, start command session, and apply appropriate logic to listen on app() state from worker
-        # if not, send a certain message back and keep listeing for potential commands
    
-
     # create identifier
     client_host = f"{websocket.client.host}:{str(websocket.client.port)}"
     client_id = f"{client_name}-{client_host}"
 
+    session = None # will get update once a command session is instantiated
+
     try:
+        # Before entering logic that communicates with worker/client to complete a task, a command session must be official started.
+        # We do this by evaluating the first phrases the client sends through as initial command queries. Once we've thought to have received
+        # one, we instantiate an official command session and enter the aforementioned logic
+        # Once initiating the CommandSession(), a formal commandRequest body is built and sent over to the asyncQueue, causing an Async worker
+        # to be created, connect to the API, and connect to this command session
+
+        # Initially only receive client responses, attempt to evaluate if they are a valid attempt to start a command session
+        while True:
+            client_inquery = await websocket.receive_text() 
+
+            #TODO: make callback to intent classifier
+            classififed_intent = ("fake intent", "classification")
+            
+            # check if intent classifier was able to find an intent for the inquery, if not, try again with client
+            if classififed_intent[1] == "unknown":
+                # tell user command attempt failed
+                await websocket.send_text("Command not recognized, please try again")
+            else: 
+                # start an official command session
+                session = websocket.app.command_manager.create_session(client_id, classififed_intent)
+
+                # have client officially connect to the command session
+                websocket.app.command_manager.connect_to_session(client_id, True)
+
+                await websocket.send_text("")
+                break
+            
+        # # # worker/client communication logic # # #
         prev_worker_resp = ""
         while True:
             # receive client response 
@@ -65,6 +89,15 @@ async def convo_text_browser(websocket: WebSocket, client_name: str):
     except (WebSocketDisconnect, ConnectionClosedError):
         websocket.app.manager.disconnect(websocket)
         print(f"Conversational text endpoint for client {client_id} disconnected")
+
+
+
+#TODO: later on, add logic to handle the end of a command session
+    # this involves disconnecting the current command session object, restarting logic from the top, 
+    # and starting a brand new session object
+    # we will also need to disconnect the associate async worker for every session and have a new one join
+
+
 
 
 

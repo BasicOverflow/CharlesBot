@@ -10,3 +10,5 @@ asr_model_path: 'C:\Users\peter\Desktop\CharlesBot\external-services\speech-tran
 # external ASR server port
 # external intent classifier port
 # intent_classifier_dir
+# yaml has functionality to run python code in .yaml files:
+  # use that to dynamically get the host ip

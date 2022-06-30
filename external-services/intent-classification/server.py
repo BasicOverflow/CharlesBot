@@ -1,4 +1,5 @@
 import asyncio
+import time
 import websockets
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosed
 from classifier import IntentClassifier
@@ -11,7 +12,7 @@ classifier.load()
 
 
 #Coroutine to monitor dataset and retrain
-async def monitor_dataset():
+def monitor_dataset():
     prev_dataset = classifier.query_dataset()
     while True:
         curr_dataset = classifier.query_dataset()
@@ -22,7 +23,7 @@ async def monitor_dataset():
             classifier.retrain()
             prev_dataset = curr_dataset
 
-        await asyncio.sleep(0.1)
+        time.sleep(0.1)
 
 
 

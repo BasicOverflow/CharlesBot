@@ -3,23 +3,16 @@ import asyncio
 import yaml
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List, Dict
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from dependencies.ws_manager import ConnectionManager
+from dependencies.commandSessionManager import CommandSessionManager
 from dependencies.external_transcription_handler import BackgroundRunner
 from routers.client_video import router as client_video
 from routers.client_audio import router as client_audio 
 from routers.async_queue_comm import router as queue_comms
-
-
-#Base model for constructing & visualizing command Requests that are sent to the AsyncQueue
-class Command(BaseModel):
-    func_name: str
-    args: List[str]
-    kwargs: Dict
-    command_id: str
-    client_id: str
+from routers.conversational_text import router as convo_text
+from routers.async_worker_comm import router as worker_comm
 
 
 # start API instance
@@ -28,6 +21,8 @@ app = FastAPI()
 app.include_router(client_video)
 app.include_router(client_audio)
 app.include_router(queue_comms)
+app.include_router(convo_text)
+app.include_router(worker_comm)
 
 #api configuration settings
 settings = yaml.safe_load(open("./settings.yaml")) 
@@ -36,6 +31,9 @@ app.state.pending_commands = []
 
 # websocket connection manager
 app.manager = ConnectionManager()
+
+# command session manager
+app.command_manager = CommandSessionManager(app.state.pending_commands)
 
 # start background runner for monitoring external transcription service
 runner = BackgroundRunner()
@@ -84,6 +82,21 @@ async def init_external_transcription_handler():
     asyncio.create_task(
         runner.monitor_new_connections(app)
     )
+
+
+@app.on_event("startup")
+async def startup_db_client():
+    '''Creates mongodb client object and appends it to app'''
+    app.mongo_client = AsyncIOMotorClient("mongodb://localhost")
+    app.mongodb = app.mongo_client["CharlesCommandSessions"]     
+    app.mongo_collection = app.mongodb["CommandSessions"]
+
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    app.mongo_client.close()
+
+
 
 
 if __name__ == "__main__":

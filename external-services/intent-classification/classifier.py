@@ -1,5 +1,5 @@
-import os
 import json
+from typing import Tuple
 from neuralintents import GenericAssistant
 
 
@@ -11,50 +11,80 @@ def decorator(tag):
     return dec
 
 
-current_intent = None
 
-def update(tag):
-    global current_intent
-    current_intent = tag
+class IntentClassifier(object):
+    ''''''
+    def __init__(self):
+        self.current_intent = None
+    
+        self.classifier_dir = json.load(open("./settings.json", "r"))["intent_classifier_dir"]
+        # print(classifier_dir)
+
+        self.mappings = json.load(open(f"{self.classifier_dir}/model/mappings.json", "r"))
+
+        for key in self.mappings.keys():
+            val = self.mappings[key]
+            # print(val)
+            # mappings[key] = lambda: update(val)
+            self.mappings[key] = decorator(val)(self.update)
+
+        self.assistant = GenericAssistant(f'{self.classifier_dir}/model/intents.json', self.mappings, "Charles3.0")
 
 
-classifier_dir = json.load(open("./settings.json", "r"))["intent_classifier_dir"]
-# print(classifier_dir)
+    def retrain(self):
+        self.mappings = json.load(open(f"{self.classifier_dir}/model/mappings.json", "r"))
 
-mappings = json.load(open(f"{classifier_dir}/mappings.json", "r"))
-
-for key in mappings.keys():
-    val = mappings[key]
-    # print(val)
-    # mappings[key] = lambda: update(val)
-    mappings[key] = decorator(val)(update)
-
-# print(mappings)
+        for key in self.mappings.keys():
+            val = self.mappings[key]
+            # print(val)
+            # mappings[key] = lambda: update(val)
+            self.mappings[key] = decorator(val)(self.update)
 
 
-assistant = GenericAssistant(
-    f'{classifier_dir}/intents.json', 
-    # f"{classifier_dir}/model", 
-    mappings, 
-    "Charles3.0"
-    )
+        self.assistant = GenericAssistant(f'{self.classifier_dir}/model/intents.json', self.mappings, "Charles3.0")
+        self.load()
 
-# assistant.train_model()
-# assistant.save_model()
-assistant.load_model()
+        self.assistant.train_model()
+        self.assistant.save_model()
 
-def query_intent(message):
-    '''Edits current global variable to whatever intent the message entered wants, yields the message'''
-    assistant.request(message)
-    return (message,current_intent)
+    
+    def load(self):
+        self.assistant.load_model()
+
+
+    def update(self, tag):
+        global current_intent
+        self.current_intent = tag
+
+    
+    def query_dataset(self):
+        self.mappings = json.load(open(f"{self.classifier_dir}/model/mappings.json", "r"))
+        intents = json.load(open(f"{self.classifier_dir}/model/intents.json", "r"))
+        return (self.mappings, intents)
+
+    
+    def query_intent(self, msg) -> Tuple[str, str]:
+        '''Edits current global variable to whatever intent the message entered wants, yields the message'''
+        self.assistant.request(msg)
+        return (msg,self.current_intent)
+
+
+
+
+
+
+    
 
 
 if __name__ == "__main__":
-    print(query_intent("poopy pants in my butt"))
-    print(query_intent("Save the next 10 minutes of video"))
-    print(query_intent("archive the last 5 hours of audio"))
-    print(query_intent("perform test websocket connection with client"))
-    print(query_intent("perform system diagnostics"))
+    testModel = IntentClassifier()
+    testModel.load()
+
+    print(testModel.query_intent("poopy pants in my butt"))
+    print(testModel.query_intent("Save the next 10 minutes of video"))
+    print(testModel.query_intent("archive the last 5 hours of audio"))
+    print(testModel.query_intent("perform test websocket connection with client"))
+    print(testModel.query_intent("perform system diagnostics"))
 
 
 
