@@ -6,11 +6,7 @@ from websockets.exceptions import ConnectionClosed, ConnectionClosedOK
 
 class BackgroundRunner(object):
 
-    def __init__(self) -> None:
-        pass
-
-
-    async def monitor_new_connections(self, app):
+    async def monitor_new_connections(self, app: any) -> None:
         '''Monitors app state and looks for newly connected audio clients, upon new client, dispactches coroutine to connect to external transcription service'''
 
         #hold array of all the client_id's that have been assigned transcription service
@@ -35,7 +31,7 @@ class BackgroundRunner(object):
             await asyncio.sleep(0.05)
 
 
-    async def ws_transcription_client(self, url, client_id, app):
+    async def ws_transcription_client(self, url: str, client_id: str, app: any) -> None:
         '''New instance is created for each audio client connection, looks at & updates app state, communicates frameswith external server. Receives trascribed text and updates app() state'''
         print(f"ws transcription client created for {client_id}")
 

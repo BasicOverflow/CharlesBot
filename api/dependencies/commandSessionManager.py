@@ -74,7 +74,7 @@ class CommandSession():
         return convo
 
     
-    async def update_session_termination_db(self):
+    async def update_session_termination_db(self) -> None:
         '''Updates db with session termination time & indicator that conversation is complete'''
         await log_convo_termination(self.cursor, self.session_id)
 
@@ -96,7 +96,7 @@ class CommandSessionManager():
         self.active_sessions: List[CommandSession] = []
         self.inactive_sessions: List[CommandSession] = []
         self.pending_commands = pending_commands # allows for sessions to add new pending tasks to app() state
-        self.cursor = None
+        self.cursor: any = None
 
     
     def obtain_db_cursor(self, cursor: any) -> None:

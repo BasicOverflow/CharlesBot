@@ -91,9 +91,6 @@ class IntentClassifier(object):
 
 
 
-    
-
-
 if __name__ == "__main__":
     testModel = IntentClassifier()
     testModel.load()
