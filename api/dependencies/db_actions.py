@@ -29,7 +29,6 @@ async def log_conversation_piece(cursor: any, session_id: str, phrase: str, sour
     await cursor.update_one({ "_id":session_id}, {"$set": {"conversation": convo} }) 
 
 
-
 async def pull_full_convo(cursor: any, session_id: str) -> List[Dict]:
     '''Returns a list of dict objects that hold the phrases from the conversation & who said what'''
     # pull document from db

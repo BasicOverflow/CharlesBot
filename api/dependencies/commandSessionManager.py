@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from uuid import uuid4
 import asyncio
 
-from db_actions import *
+from dependencies.db_actions import *
 
 
 
@@ -96,7 +96,12 @@ class CommandSessionManager():
         self.active_sessions: List[CommandSession] = []
         self.inactive_sessions: List[CommandSession] = []
         self.pending_commands = pending_commands # allows for sessions to add new pending tasks to app() state
-        # TODO: Init db cursor, pass it to CommandSession()
+        self.cursor = None
+
+    
+    def obtain_db_cursor(self, cursor: any) -> None:
+        '''Allows db cursor to be passed once its been initialized'''
+        self.cursor = cursor
 
 
     def search_session(self, client_id: str) -> Union[CommandSession, bool]:
@@ -112,7 +117,8 @@ class CommandSessionManager():
         # Dont allow for multiple sessions with the same id to exist
         if self.search_session(client_id): return False
 
-        session = CommandSession(client_id, classification, self.pending_commands)
+        assert self.cursor is not None #make sure the db cursor was initialized and passed to the session manager before proceeding
+        session = CommandSession(client_id, classification, self.pending_commands, self.cursor)
         self.active_sessions.append(session)
         return True
 

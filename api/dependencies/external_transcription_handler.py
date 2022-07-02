@@ -1,4 +1,5 @@
 import asyncio
+from http import client
 import websockets
 from websockets.exceptions import ConnectionClosed, ConnectionClosedOK
 
@@ -31,11 +32,12 @@ class BackgroundRunner(object):
                     # remove its presence from processed clients
                     processed_clients.remove(client_id)
 
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.05)
 
 
     async def ws_transcription_client(self, url, client_id, app):
-        '''New instance is created for each client connection, looks at & updates app state, communicates with external serever'''
+        '''New instance is created for each audio client connection, looks at & updates app state, communicates frameswith external server. Receives trascribed text and updates app() state'''
+        print(f"ws transcription client created for {client_id}")
 
         try:
             async with websockets.connect(url) as ws:

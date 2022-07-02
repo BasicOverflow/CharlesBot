@@ -1,4 +1,5 @@
 import yaml
+from asyncio import to_thread
 import wave
 import pathlib
 import pickle
@@ -63,10 +64,10 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
             # Check if file exists
             if not os.path.isfile(file):
                 # Create file 
-                open(file,"a").close()  
+                await to_thread(lambda: open(file,"a").close()) # Have asyncio execute task on seperate thread  
 
             # open write connection to curr wave file
-            curr_dir = open_wav(file)
+            curr_dir = await to_thread(open_wav, file) # takes blocking function and executes it in another thread, and awaits return value
 
             # receive audio frames
             while True:
@@ -91,7 +92,7 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
                 if gap >= 1: break
                     
             #Release write object
-            curr_dir.close()
+            await to_thread(curr_dir.close)
 
     except (WebSocketDisconnect, RuntimeError) as e:
         print(f"{Fore.GREEN}INFO:     Audio ws for {Fore.LIGHTBLACK_EX}{client_id} droppped: [{e}]")
@@ -104,24 +105,4 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
         curr_dir.close()
         websocket.app.manager.disconnect(websocket)
         
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

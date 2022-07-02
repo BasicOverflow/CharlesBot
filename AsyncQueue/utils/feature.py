@@ -21,6 +21,7 @@ class Feature(object):
         # Any inqueries to follow up with client (list of strings) #TODO: <- not needed anymore
         # the function itself
         # the function's name'''
+        
     def __init__(self,func,intents):
         self.func = func
         # print(inspect.getfullargspec(func))

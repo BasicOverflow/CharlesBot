@@ -14,7 +14,7 @@ async def convo_text(websocket: WebSocket, client_name: str):
     '''Receives inqueries from client, updates app() state, then waits for new response from async worker by looking at other app() state'''
     # this endpoint only looks at all the app() states and sends everything one way to client
 
-     #TODO: check if in a command session (have to build command session manager first) 
+     #TODO: check if in a command session 
         # if not, logic needs to change so that its not waiting for responses from worker (which doesnt even exist if not in a command session)
         # instead, receive text from client and check if its a command, if it is, build formal command request and ship it
             # then init a command session and enter proper logic to listen to worker
@@ -25,7 +25,18 @@ async def convo_text(websocket: WebSocket, client_name: str):
     client_host = f"{websocket.client.host}:{str(websocket.client.port)}"
     client_id = f"{client_name}-{client_host}"
 
-    # TODO: remove associate app() state upon disconect (convo phrasees)
+    # TODO: remove associated app() state upon disconect (convo phrasees)
+
+    #Have initial while True loop that waits for changes in app() client phrase state
+        # upon each change, do logic to check if its a valid command and create command session, and break out of loop if it is
+        # if its not, iterate again through loop
+    
+    #then next loop, first wait for changes to
+
+
+    # in each loop, send any new updates in state (client and worker) to client, and label them as such (client or worker phrase)
+        # and log them
+        # client only reeives, sends nothing to this endpoint
     
 
 
@@ -38,7 +49,7 @@ async def convo_text_browser(websocket: WebSocket, client_name: str):
     client_host = f"{websocket.client.host}:{str(websocket.client.port)}"
     client_id = f"{client_name}-{client_host}"
 
-    session = None # will get update once a command session is instantiated
+    session = None # will get updated once a command session is instantiated
 
     try:
         # Before entering logic that communicates with worker/client to complete a task, a command session must be official started.
@@ -52,8 +63,10 @@ async def convo_text_browser(websocket: WebSocket, client_name: str):
             client_inquery = await websocket.receive_text() 
 
             #TODO: make callback to intent classifier
-            classififed_intent = ("fake intent", "classification")
-            
+            classififed_intent = (client_inquery, "classification")
+            # https://stackoverflow.com/questions/63872924/how-can-i-send-an-http-request-from-my-fastapi-app-to-another-site-api
+                # first answer with score of 50
+
             # check if intent classifier was able to find an intent for the inquery, if not, try again with client
             if classififed_intent[1] == "unknown":
                 # tell user command attempt failed
@@ -65,21 +78,27 @@ async def convo_text_browser(websocket: WebSocket, client_name: str):
                 # have client officially connect to the command session
                 websocket.app.command_manager.connect_to_session(client_id, True)
 
-                await websocket.send_text("")
+                await websocket.send_text("") #TODO <- watch this here 
                 break
-            
+
+        #TODO: probably have to switch logic around in the below loop to first obtain worker response first, than recv from client
         # # # worker/client communication logic # # #
         prev_worker_resp = ""
         while True:
             # receive client response 
             client_resp = await websocket.receive_text()
 
-            #TODO: log new client phrase
+            #if its an empty string, client might try and send two messages in a row, so restart loop
+            #TODO: this might cause issues, test it, maybe send back an empty string then 'continue'
+            if client_resp.strip() == "": continue
+
+            #log new client phrase
+            session.log_client_phrase(client_resp)
 
             # save new response to app() state
             websocket.app.state.convo_phrases[client_id] = client_resp
 
-            # Wait for new client followup #TODO: this might not work, test it 
+            # Wait for new worker followup #TODO: this might not work, test it 
             while (worker_resp := websocket.app.state.worker_phrases[client_id]) == prev_worker_resp: await asyncio.sleep(0.05)
             prev_worker_resp = worker_resp = websocket.app.state.worker_phrases[client_id]
 
@@ -87,7 +106,8 @@ async def convo_text_browser(websocket: WebSocket, client_name: str):
             await websocket.send_text(worker_resp)
 
     except (WebSocketDisconnect, ConnectionClosedError):
-        #TODO: add logic to shut down command session
+        #shut down command session and disconnect
+        websocket.app.command_manager.deactivate_session(client_id)
         websocket.app.manager.disconnect(websocket)
         print(f"Conversational text endpoint for client {client_id} disconnected")
 

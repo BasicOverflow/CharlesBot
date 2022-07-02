@@ -1,6 +1,7 @@
 import yaml
 import os
 import pathlib
+from asyncio import to_thread
 import pickle
 from datetime import datetime
 import numpy as np
@@ -25,9 +26,7 @@ async def ws_video_endpoint(websocket: WebSocket, client_name: str):
     await websocket.app.manager.connect(websocket)
 
     try:
-
         while True:
-
             #Init datetimes to keep track of time
             start_str = datetime.now().strftime('%m-%d-%Y %I-%M %p') #Readable string date
             start_date = datetime.strptime(start_str, '%m-%d-%Y %I-%M %p') #Back to datetime object
@@ -38,9 +37,9 @@ async def ws_video_endpoint(websocket: WebSocket, client_name: str):
             else: pathlib.Path(f'{video_file_path}/{client_name}').mkdir(parents=True, exist_ok=True) #make the dir
 
             #create video file manager
-            fourcc = cv2.VideoWriter_fourcc(*'XVID')
+            fourcc = await to_thread( lambda: cv2.VideoWriter_fourcc(*'XVID') )
             #Define write object
-            out = cv2.VideoWriter(f'{video_file_path}/{client_name}/{start_str}.avi', fourcc, 20, (640, 480),True)
+            out = await to_thread( lambda: cv2.VideoWriter(f'{video_file_path}/{client_name}/{start_str}.avi', fourcc, 20, (640, 480),True) )
 
             #Start archiving frames
             while True:
@@ -48,25 +47,26 @@ async def ws_video_endpoint(websocket: WebSocket, client_name: str):
                 data = pickle.loads(data["bytes"],encoding='bytes') if data["type"] == "websocket.receive" else data  #data returns a ws disconnect dictionary when client disconnects or a dict with client id at first connection, this line accounts for that
                 
                 if type(data) == type({"":""}) and data["type"] == "websocket.disconnect":
-                    pass
+                    continue
                 else: #archive the frame
                     data = cv2.imdecode(np.frombuffer(data, dtype='uint8'),cv2.IMREAD_COLOR)
-                    #calc time gap between now and start_date
-                    gap = ((datetime.now()-start_date).total_seconds())/60/60 #Returns time gap in hours
-
-                    #Check if gap has reached an hour, if so restart loop and start archiving into new file
-                    if gap >= 1: break
 
                     #Archive frame into file
                     out.write(data)
+                
+                #calc time gap between now and start_date
+                gap = ((datetime.now()-start_date).total_seconds())/60/60 #Returns time gap in hours
+
+                #Check if gap has reached an hour, if so restart loop and start archiving into new file
+                if gap >= 1: break
 
             #Release write object
-            out.release()
+            await to_thread( out.release )
     
     except (WebSocketDisconnect, RuntimeError):
         websocket.app.manager.disconnect(websocket)
         cv2.destroyAllWindows()
-        # await manager.broadcast(f"Client #{client_id} left the chat")
+        
     except Exception as e:
         print(e)
 
