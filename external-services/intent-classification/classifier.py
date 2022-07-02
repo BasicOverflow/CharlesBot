@@ -11,16 +11,34 @@ def decorator(tag):
     return dec
 
 
+class FixedGenericAssistant(GenericAssistant):
+    '''Fixes bugs from neuralintents.GenericAssistant'''
+
+    def __init__(self, intents, intent_methods={}, model_name="assistant_model"):
+        super().__init__(intents, intent_methods, model_name=model_name)
+
+        self.root = r"C:\Users\peter\Desktop\CharlesBot\external-services\intent-classification"
+        self.model_name = rf"{self.root}\model\{model_name}"
+
+    def request(self, message):
+        ints = self._predict_class(message)
+
+        if ints[0]['intent'] in self.intent_methods.keys():
+            self.intent_methods[ints[0]['intent']]()
+        else:
+            print(self._get_response(ints, self.intents))
+    
+
 
 class IntentClassifier(object):
     ''''''
     def __init__(self):
         self.current_intent = None
     
-        self.classifier_dir = json.load(open("./settings.json", "r"))["intent_classifier_dir"]
+        self.classifier_dir = r"C:\Users\peter\Desktop\CharlesBot\external-services\intent-classification"
         # print(classifier_dir)
 
-        self.mappings = json.load(open(f"{self.classifier_dir}/model/mappings.json", "r"))
+        self.mappings = json.load(open(rf"{self.classifier_dir}\mappings.json", "r"))
 
         for key in self.mappings.keys():
             val = self.mappings[key]
@@ -28,7 +46,7 @@ class IntentClassifier(object):
             # mappings[key] = lambda: update(val)
             self.mappings[key] = decorator(val)(self.update)
 
-        self.assistant = GenericAssistant(f'{self.classifier_dir}/model/intents.json', self.mappings, "Charles3.0")
+        self.assistant = FixedGenericAssistant(f'{self.classifier_dir}/intents.json', self.mappings, model_name="Charles3.0")
 
 
     def retrain(self):
@@ -41,7 +59,7 @@ class IntentClassifier(object):
             self.mappings[key] = decorator(val)(self.update)
 
 
-        self.assistant = GenericAssistant(f'{self.classifier_dir}/model/intents.json', self.mappings, "Charles3.0")
+        self.assistant = FixedGenericAssistant(f'{self.classifier_dir}/intents.json', self.mappings, "Charles3.0")
         self.load()
 
         self.assistant.train_model()
