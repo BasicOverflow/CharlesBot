@@ -1,5 +1,7 @@
 import json
 import os,sys
+
+from fastapi import WebSocket
 sys.path.append(f"{os.getcwd()}/TaskQueue")
 from features.feature import Feature
 import requests
@@ -17,7 +19,7 @@ api_port = str(json.load(open("./settings.json", "r"))["api_port"])
     # check to see if all pi devices are connected and streaming data
     # how to check if streaming data: the ws object in api manager as url property that shows the active endpoint
 
-def api_test():
+def api_test() -> str:
     response = requests.get(f"http://{api_host}:{api_port}/debug")
     if (r_code := response.status_code) == 200:
         return "API Test Successful"
@@ -25,7 +27,7 @@ def api_test():
         return f"API Test Failed: {str(r_code)} code received"
     
 
-async def queue_ws_test():
+async def queue_ws_test() -> str:
     '''Check queue responsiveness by opening ws connection and using its test feature'''
     # try:
     #     async with websockets.connect(f"ws://{api_host}:{api_port}/ws/CommandSessionClient/local") as ws:
@@ -46,7 +48,7 @@ async def queue_ws_test():
 
     
 
-def front_end_test():
+def front_end_test() -> str:
     try:
         response = requests.get("http://localhost:8005")
         if (r_code := response.status_code) == 200:
@@ -57,7 +59,7 @@ def front_end_test():
         return "Front End Test Failed"
 
 
-def check_pi_devices():
+def check_pi_devices() -> str:
     response = requests.get(f"http://{api_host}:{api_port}/debug")
     ws_cons = json.loads(response.text)["Websockets"]
     ws_cons = [i["_url"] for i in ws_cons]
@@ -72,7 +74,7 @@ def check_pi_devices():
         return f"No Network Nodes Online"
 
     
-async def system_diagnostics(ws_handler):
+async def system_diagnostics(ws_handler: WebSocket) -> None:
     try:
         await ws_handler.send("Starting All System Diagnostics...++")
         await ws_handler.recv()
@@ -107,7 +109,7 @@ system_diagnostics = Feature(system_diagnostics,
 
 
 
-async def test():
+async def test() -> None:
     first_test = api_test()
     second_test = await queue_ws_test()
     third_test = front_end_test()

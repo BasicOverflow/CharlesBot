@@ -1,5 +1,6 @@
 import asyncio
 import time
+from fastapi import WebSocket
 import websockets
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosed
 from classifier import IntentClassifier
@@ -12,7 +13,7 @@ classifier.load()
 
 
 #Coroutine to monitor dataset and retrain
-def monitor_dataset():
+def monitor_dataset() -> None:
     prev_dataset = classifier.query_dataset()
     while True:
         curr_dataset = classifier.query_dataset()
@@ -26,8 +27,7 @@ def monitor_dataset():
         time.sleep(0.1)
 
 
-
-async def serve(websocket, path):
+async def serve(websocket: WebSocket, path: str) -> None:
     try:
         while True:
             # receive inquery from client
@@ -40,9 +40,7 @@ async def serve(websocket, path):
         pass
 
 
-
-
-async def main():
+async def main() -> None:
     async with websockets.serve(serve, "localhost", 8765):
         await asyncio.Future()  # run forever
 

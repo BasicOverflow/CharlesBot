@@ -1,3 +1,4 @@
+from fastapi import WebSocket
 import yaml
 import asyncio
 import websockets
@@ -11,11 +12,10 @@ model = Model(rf"{model_path}") #light
 recognizer = KaldiRecognizer(model, 16000)
 
 
-async def serve(websocket, path):
+async def serve(websocket: WebSocket, path: str) -> None:
     print(f"{websocket} | {path} connected")
     try:
         while True:
-
             # receive audio frame
             frame = await websocket.recv()
 
@@ -38,7 +38,7 @@ async def serve(websocket, path):
 
 
 
-async def main():
+async def main() -> None:
     async with websockets.serve(serve, "localhost", 8005):
         await asyncio.Future() # run forever
 

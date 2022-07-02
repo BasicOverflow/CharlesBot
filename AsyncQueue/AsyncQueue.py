@@ -1,15 +1,18 @@
 import asyncio
+from typing import Callable, Dict
 import websockets
 import colorama
 import yaml
 import json
 from colorama import Fore
 
+from AsyncQueue.utils.feature import Feature
+
 colorama.init(autoreset=True)
 
 
 class QueueTask(object):
-    def __init__(self, func, args, kwargs):
+    def __init__(self, func: Callable, args: any, kwargs: any) -> None:
         self.func = func
         self.args = args
         self.kwargs = kwargs
@@ -19,16 +22,18 @@ class QueueTask(object):
 class AsyncQueue(object):
     '''Asynchronous Queue that receives tasks to complete, executes them as coroutines, and communicates results back to the original client who inquired'''
    
-    def __init__(self):
+    def __init__(self) -> None:
         #Holds all features added to queue (these would be dummy tasks in older versions of charles)
         self.features = []
         self.event_trigger = False
         #Holds the actual function objects to be executed as cron jobs, these are constructed by incoming commands and reference Feature objects from self.features
         self.pending_tasks = []
-        self.api = yaml.safe_load(open("../settings.yaml"))["host_ip"] + ":" + str(yaml.safe_load(open("../settings.yaml"))["host_port"])
+        
+        settings = yaml.safe_load(open("../settings.yaml"))
+        self.api = settings["host_ip"] + ":" + str(settings["host_port"])
         
 
-    def init_async_loop(self):
+    def init_async_loop(self) -> None:
         '''This is where everything gets initiated. All asynchronous event loops are triggered/reset here and all coroutines are added here. Additonally all async arrays/vars are defined here.
         This needs to be called to start up everything else.'''
 
@@ -62,7 +67,7 @@ class AsyncQueue(object):
                 coro.cancel()
 
 
-    async def monitor_loop_reset(self):
+    async def monitor_loop_reset(self) -> None:
         '''This method actually triggers the reset of the asyncio event loop by calling loop.stop() upon 
         monitoring an external source. In this case, the external source is the continuous referencing of an attribute to this class'''
         while True:
@@ -77,7 +82,7 @@ class AsyncQueue(object):
             await asyncio.sleep(0.25)
     
 
-    async def ws_api_client2(self,uri):
+    async def ws_api_client2(self, uri: str) -> None:
         '''Keeps ws connection with API and communicates or command updates to queue.'''
         async with websockets.connect(uri) as ws:
 
@@ -108,7 +113,7 @@ class AsyncQueue(object):
                 self.trigger_loop_reset()
 
     
-    async def ws_api_client(self, uri):
+    async def ws_api_client(self, uri: str) -> None:
         '''A wrapper for the above method'''
         while True:
             try:
@@ -117,7 +122,7 @@ class AsyncQueue(object):
                 print(f"{Fore.RED}Queue unable to connect with API: {Fore.WHITE}{e}. Trying again...")
 
 
-    def ws_duplex_comm_client(self,client_url):
+    def ws_duplex_comm_client(self, client_url: str) -> None:
         '''Decorator that wraps a ws client around a given function to communicate results/further inqueries to api'''
         print(f"Creating ws: {client_url}")
 
@@ -133,7 +138,7 @@ class AsyncQueue(object):
         return ws_decorator
         
 
-    def add_task(self,command,feature_object):
+    def add_task(self ,command: Dict, feature_object: Feature) -> None:
         '''Takes the task to be constructed from the command and wraps it in a ws client before inserting it into event loop'''
         client_id = command["client_id"]
         client_url = f"ws://{self.api}/ws/queue_worker/{client_id}"
@@ -160,12 +165,12 @@ class AsyncQueue(object):
             )
 
 
-    def trigger_loop_reset(self):
+    def trigger_loop_reset(self) -> None:
         '''Makes the change to self.event_trigger'''
         self.event_trigger = True
 
 
-    def add_feature(self,feaure_obj):
+    def add_feature(self, feaure_obj: Feature) -> None:
         self.features.append(feaure_obj)
 
 

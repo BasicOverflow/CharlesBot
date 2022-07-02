@@ -4,6 +4,8 @@ import asyncio
 import sys, os
 from subprocess import Popen, PIPE, CREATE_NEW_CONSOLE
 import json
+
+from fastapi import WebSocket
 sys.path.append(f"{os.getcwd()}/TaskQueue")
 from features.feature import Feature
 
@@ -46,7 +48,7 @@ for line in sys.stdin:
             self.stdin.write(str(msg)+"\n")
 
 
-async def display_audio(client_id):
+async def display_audio(client_id: str) -> None:
     '''If an instance of this runs the same time as archive_audio, it wont display everything. Im assuming bc two instanes on the same machine are making api calls at the same time.
     to get around this, this function will try to log incoming phrases from the audio archives. If that fails (ie if its not running at the moment) it will resort to printing everything
     it gets from API calls. replace(microsecond=0)'''
@@ -85,7 +87,7 @@ async def display_audio(client_id):
             f.close()
 
 
-async def keep_audio(client_id, ws_handler):
+async def keep_audio(client_id: str, ws_handler: WebSocket) -> None:
     global audio_directory
     await ws_handler.send("Input the date range desired")
     date_str = await ws_handler.recv()
@@ -155,7 +157,7 @@ async def keep_audio(client_id, ws_handler):
     await ws_handler.send("Command Completed")
 
 
-async def filter_archived_audio(timegap=12):
+async def filter_archived_audio(timegap: int = 12) -> None:
     '''Iterates through all audio files and pulls the date from their names. Determines how long they've been in archive. If over the specified timegap (in hours), file gets deleted.
     if the video is in save_files.txt, wont get touched no matter what'''
     global audio_directory

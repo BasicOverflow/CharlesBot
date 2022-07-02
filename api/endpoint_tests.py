@@ -6,6 +6,7 @@ def test_read_main() -> None:
     '''Test root endpoint to see if a response is received'''
     client = TestClient(app)
     response = client.get("/")
+    # TODO: just check status code instead
     # print(response.text)
     assert response.text
 

@@ -1,5 +1,7 @@
 import asyncio
 import json
+from typing import Dict
+from fastapi import WebSocket
 import tweepy
 import textblob
 import pandas as pd
@@ -7,6 +9,8 @@ import re
 import datetime 
 #To resolve some stupid import from features issue I dont fully know about^
 import sys, os
+
+import websockets
 sys.path.append(f"{os.getcwd()}/TaskQueue")
 from features.feature import Feature
 
@@ -28,7 +32,7 @@ api = tweepy.API(authenticator, wait_on_rate_limit=True)
 
 
 
-def pull_tweets(topic):
+def pull_tweets(topic: str) -> pd.DataFrame:
     global api, start, end
     topic = f"#{topic} -filter:retweets"
     cursor = tweepy.Cursor(api.search, q=topic, lang="en", tweet_mode="extended", until=end, since=start).items(100)
@@ -44,7 +48,7 @@ def pull_tweets(topic):
     return tweets_df
 
 
-def perform_analysis(tweets_df):
+def perform_analysis(tweets_df: pd.DataFrame) -> Dict:
     tweets_df["Polarity"] = tweets_df["Tweets"].map(lambda tweet: textblob.TextBlob(tweet).sentiment.polarity)
     tweets_df["Sentiment"] = tweets_df["Polarity"].map(lambda pol: "+" if pol > 0 else "-")
     # print(tweets_df["Tweets"])
@@ -69,7 +73,7 @@ def perform_analysis(tweets_df):
 # print(perform_analysis(pull_tweets("Poop")))
 
 
-async def perform_sent_analysis(ws_handler):
+async def perform_sent_analysis(ws_handler: WebSocket) -> None:
     ''''''
     try:
         global TIMEGAP

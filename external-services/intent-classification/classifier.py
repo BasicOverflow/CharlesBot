@@ -1,11 +1,11 @@
 import json
-from typing import Tuple
+from typing import Callable, Dict, Tuple
 from neuralintents import GenericAssistant
 
 
-def decorator(tag):
-    def dec(func):
-        def wrapper(*args,**kwargs):
+def decorator(tag: Dict) -> Callable:
+    def dec(func: Callable) -> Callable:
+        def wrapper(*args,**kwargs) -> None:
             func(tag)   
         return wrapper
     return dec
@@ -14,13 +14,13 @@ def decorator(tag):
 class FixedGenericAssistant(GenericAssistant):
     '''Fixes bugs from neuralintents.GenericAssistant'''
 
-    def __init__(self, intents, intent_methods={}, model_name="assistant_model"):
+    def __init__(self, intents: Dict, intent_methods: Dict ={}, model_name: str = "assistant_model") -> None:
         super().__init__(intents, intent_methods, model_name=model_name)
 
         self.root = r"C:\Users\peter\Desktop\CharlesBot\external-services\intent-classification"
         self.model_name = rf"{self.root}\model\{model_name}"
 
-    def request(self, message):
+    def request(self, message: str) -> None``:
         ints = self._predict_class(message)
 
         if ints[0]['intent'] in self.intent_methods.keys():
@@ -32,7 +32,7 @@ class FixedGenericAssistant(GenericAssistant):
 
 class IntentClassifier(object):
     ''''''
-    def __init__(self):
+    def __init__(self) -> None:
         self.current_intent = None
     
         self.classifier_dir = r"C:\Users\peter\Desktop\CharlesBot\external-services\intent-classification"
@@ -49,7 +49,7 @@ class IntentClassifier(object):
         self.assistant = FixedGenericAssistant(f'{self.classifier_dir}/intents.json', self.mappings, model_name="Charles3.0")
 
 
-    def retrain(self):
+    def retrain(self) -> None:
         self.mappings = json.load(open(f"{self.classifier_dir}/model/mappings.json", "r"))
 
         for key in self.mappings.keys():
@@ -66,22 +66,22 @@ class IntentClassifier(object):
         self.assistant.save_model()
 
     
-    def load(self):
+    def load(self) -> None:
         self.assistant.load_model()
 
 
-    def update(self, tag):
+    def update(self, tag: str) -> None:
         global current_intent
         self.current_intent = tag
 
     
-    def query_dataset(self):
+    def query_dataset(self) -> Tuple[Dict, Dict]:
         self.mappings = json.load(open(f"{self.classifier_dir}/model/mappings.json", "r"))
         intents = json.load(open(f"{self.classifier_dir}/model/intents.json", "r"))
         return (self.mappings, intents)
 
     
-    def query_intent(self, msg) -> Tuple[str, str]:
+    def query_intent(self, msg: str) -> Tuple[str, str]:
         '''Edits current global variable to whatever intent the message entered wants, yields the message'''
         self.assistant.request(msg)
         return (msg,self.current_intent)

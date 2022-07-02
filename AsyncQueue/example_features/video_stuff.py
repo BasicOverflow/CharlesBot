@@ -1,4 +1,5 @@
 import cv2
+from fastapi import WebSocket
 import numpy as np
 from datetime import date, datetime,timedelta
 import os
@@ -16,7 +17,7 @@ PAST_PHRASES = ["past", "before", "last"]
 FUTURE_PHRASES = ["future", "following", "next", "proceeding"]
 
 
-async def filter_archived_video(timegap=12): #Timegap in hours
+async def filter_archived_video(timegap: int = 12) -> None: #Timegap in hours
     '''Iterates through all video files and pulls the date from their names. Determines how long they've been in archive. If over the specified time, video gets deleted.
     if the video is in save_files.txt, wont get touched no matter what'''
     global video_directory
@@ -53,7 +54,7 @@ async def filter_archived_video(timegap=12): #Timegap in hours
             else: pass
 
 
-async def keep_video(client_id, ws_handler):
+async def keep_video(client_id: str, ws_handler: WebSocket) -> None:
     '''Appends a new line to a txt file indicating the archive function to keep whatever files fall within the given range. Determines start/end date from given string'''
     global video_directory
     await ws_handler.send("Input the date range desired")
@@ -123,7 +124,7 @@ async def keep_video(client_id, ws_handler):
     await ws_handler.send("Command Completed")
 
 
-async def display_video(client_id, ws_handler):
+async def display_video(client_id: str, ws_handler: WebSocket) -> None:
     '''Takes a string like 'show me the last hour of video' and brings up the corrseponding video file and plays it '''
     await ws_handler.send("What timeframe would you like to view?")
     date_str = await ws_handler.recv()

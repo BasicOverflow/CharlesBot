@@ -4,15 +4,12 @@ import spacy
 from os import system
 
 
-
 # load model upon script init to avoid wait time during command session
 try:
     NER = spacy.load("en_core_web_sm")
 except:
     system("python -m spacy download en_core_web_sm")
     NER = spacy.load("en_core_web_sm")
-
-
 
 
 class NamedEntityExtractor(object):

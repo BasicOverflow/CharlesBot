@@ -1,6 +1,9 @@
 import json
 import inspect
 import asyncio
+from typing import Callable, Dict
+
+from fastapi import WebSocket
 
 #NOTE: FOR FEATURES THAT ACCEPT A WS CONNECTION:
     #The param in the function definition for the ws conn must be the last argument
@@ -22,7 +25,7 @@ class Feature(object):
         # the function itself
         # the function's name'''
         
-    def __init__(self,func,intents):
+    def __init__(self, func: Callable, intents: Dict) -> None:
         self.func = func
         # print(inspect.getfullargspec(func))
         self.func_params = inspect.getfullargspec(func)[0]
@@ -40,12 +43,12 @@ class Feature(object):
                 self.inquire = True
 
     
-    async def run(self, *args, **kwargs):
+    async def run(self, *args, **kwargs) -> None:
         '''With the given arguments, executes the function as a coroutine'''
         await self.func(*args, **kwargs)
 
     
-    def update_intents(self,file=f"{root_dir}/intents.json"):
+    def update_intents(self, file: str = f"{root_dir}/intents.json") -> None:
         '''Opens intents.json, sees if the current intent is already present in the file. If not, it adds it'''
         intents = json.load(open(file,"r"))
         #check if the tag is brand new
@@ -69,7 +72,7 @@ class Feature(object):
                     json.dump(intents, open(file,"w",encoding="utf-8"), ensure_ascii=False, indent=2)
     
 
-    def update_mappings(self,file=f"{root_dir}/mappings.json"):
+    def update_mappings(self, file: str = f"{root_dir}/mappings.json") -> None:
         '''the mappings json object passed into the intent classifier is serialized into a file so it can be update by a new featire here'''
         #reconstruct mappings and check to see if the current feature's mapping is already there
         #read mappings
@@ -90,7 +93,7 @@ class Feature(object):
 
 
 # Test feature:
-async def tester(user_str, ws_handler, pee="na na na nig"):
+async def tester(user_str: str, ws_handler: WebSocket, pee: str = "na na na nig") -> None:
     try: 
         # print(user_str)
         # print(ws_handler)
