@@ -144,7 +144,7 @@ class CommandSessionManager():
         '''Makes command session inactive'''
         session = self.search_session(client_id)
         session.session_ongoing = False
-        session.update_session_termination_db() #updates mongodb document
+        await session.update_session_termination_db() #updates mongodb document
         self.active_sessions.remove(session)
         self.inactive_sessions.append(session)
 

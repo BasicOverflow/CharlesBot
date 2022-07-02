@@ -90,6 +90,7 @@ async def startup_db_client():
     app.mongo_client = AsyncIOMotorClient("mongodb://localhost")
     app.mongodb = app.mongo_client["CharlesCommandSessions"]     
     app.mongo_collection = app.mongodb["CommandSessions"]
+    app.command_manager.obtain_db_cursor(app.mongo_collection)
 
 
 @app.on_event("shutdown")

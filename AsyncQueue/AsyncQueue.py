@@ -28,7 +28,7 @@ class AsyncQueue(object):
         self.event_trigger = False
         #Holds the actual function objects to be executed as cron jobs, these are constructed by incoming commands and reference Feature objects from self.features
         self.pending_tasks = []
-        
+
         settings = yaml.safe_load(open("../settings.yaml"))
         self.api = settings["host_ip"] + ":" + str(settings["host_port"])
         
