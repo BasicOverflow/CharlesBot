@@ -22,21 +22,45 @@ async def convo_text(websocket: WebSocket, client_name: str):
     await websocket.app.manager.connect(websocket)
 
     # create identifier
-    client_host = f"{websocket.client.host}:{str(websocket.client.port)}"
-    client_id = f"{client_name}-{client_host}"
+    client_id = f"{client_name}-{websocket.client.host}"
 
-    # TODO: remove associated app() state upon disconect (convo phrasees)
+    try:
 
-    #Have initial while True loop that waits for changes in app() client phrase state
-        # upon each change, do logic to check if its a valid command and create command session, and break out of loop if it is
-        # if its not, iterate again through loop
+        # TODO: remove associated app() state upon disconect (convo phrasees)
+
+        #Have initial while True loop that waits for changes in app() client phrase state
+            # upon each change, do logic to check if its a valid command and create command session, and break out of loop if it is
+            # if its not, iterate again through loop
+        
+        #then next loop, first wait for changes to
+
+
+        # in each loop, send any new updates in state (client and worker) to client, and label them as such (client or worker phrase)
+            # and log them
+            # client only reeives, sends nothing to this endpoint
+
+        prev_audio_phrase = ""
+        await asyncio.sleep(1)
+        while True:
+
+            await asyncio.sleep(0.5)
+
+            if (curr_audio_phrase := websocket.app.state.convo_phrases[client_id]) != prev_audio_phrase:
+                prev_audio_phrase = curr_audio_phrase
+                await websocket.send_text(curr_audio_phrase)
+
+
+    except (WebSocketDisconnect, ConnectionClosedError):
+        print(f"Conversational text endpoint (audio) for client {client_id} disconnected")
+
+    except KeyError:
+        print(f"Detected disconnect in client {client_id}'s audio endpoint. Therefore, disconnecting associated conversational_text (for audio) endpoint as well.")
     
-    #then next loop, first wait for changes to
+    finally:
+        #shut down command session and disconnect
+        await websocket.app.command_manager.deactivate_session(client_id)
+        websocket.app.manager.disconnect(websocket)
 
-
-    # in each loop, send any new updates in state (client and worker) to client, and label them as such (client or worker phrase)
-        # and log them
-        # client only reeives, sends nothing to this endpoint
     
 
 
@@ -46,7 +70,7 @@ async def convo_text_browser(websocket: WebSocket, client_name: str):
     await websocket.app.manager.connect(websocket)
    
     # create identifier
-    client_host = f"{websocket.client.host}:{str(websocket.client.port)}"
+    client_host = f"{websocket.client.host}"
     client_id = f"{client_name}-{client_host}"
 
     session = None # will get updated once a command session is instantiated
@@ -62,7 +86,7 @@ async def convo_text_browser(websocket: WebSocket, client_name: str):
         while True:
             client_inquery = await websocket.receive_text() 
 
-            #TODO: make callback to intent classifier
+            #TODO: make (THREADED) callback to intent classifier
             classififed_intent = (client_inquery, "classification")
             # https://stackoverflow.com/questions/63872924/how-can-i-send-an-http-request-from-my-fastapi-app-to-another-site-api
                 # first answer with score of 50
@@ -99,7 +123,7 @@ async def convo_text_browser(websocket: WebSocket, client_name: str):
             websocket.app.state.convo_phrases[client_id] = client_resp
 
             # Wait for new worker followup #TODO: this might not work, test it 
-            while (worker_resp := websocket.app.state.worker_phrases[client_id]) == prev_worker_resp: await asyncio.sleep(0.05)
+            while (worker_resp := websocket.app.state.worker_phrases[client_id]) == prev_worker_resp: await asyncio.sleep(0.1)
             prev_worker_resp = worker_resp = websocket.app.state.worker_phrases[client_id]
 
             # send new worker response to client
@@ -110,6 +134,14 @@ async def convo_text_browser(websocket: WebSocket, client_name: str):
         websocket.app.command_manager.deactivate_session(client_id)
         websocket.app.manager.disconnect(websocket)
         print(f"Conversational text endpoint for client {client_id} disconnected")
+
+
+
+
+
+
+
+
 
 
 

@@ -7,7 +7,8 @@ from websockets.exceptions import ConnectionClosedOK, ConnectionClosed
 from vosk import Model, KaldiRecognizer
 
 
-model_path = yaml.safe_load(open("./settings.yaml"))["asr_model_path"]
+# model_path = yaml.safe_load(open("../settings.yaml"))["asr_model_path"]
+model_path = r"C:\Users\peter\Desktop\CharlesBot\external-services\speech-transcription\models\vosk-model-small-en-us-0.15"
 model = Model(rf"{model_path}") #light
 recognizer = KaldiRecognizer(model, 16000)
 
@@ -20,8 +21,8 @@ async def serve(websocket: WebSocket, path: str) -> None:
             frame = await websocket.recv()
 
             # feed to ASR model, if model spits out phrase, return it to client
-            if recognizer.AcceptWaveform(frame):
-                text = recognizer.Result()
+            if await asyncio.to_thread(recognizer.AcceptWaveform, frame):
+                text = await asyncio.to_thread(recognizer.Result)
                 print(text[14: -3])
 
                 # Ensure model didnt just send out empty string as a phrase
@@ -39,6 +40,7 @@ async def serve(websocket: WebSocket, path: str) -> None:
 
 
 async def main() -> None:
+    # 10.0.0.253
     async with websockets.serve(serve, "localhost", 8005):
         await asyncio.Future() # run forever
 
@@ -50,20 +52,20 @@ if __name__ == "__main__":
 
 
 
-# for testing on local mic
-# import pyaudio
-# mic = pyaudio.PyAudio()
-# stream = mic.open(
-#     format = pyaudio.paInt16,
-#     channels = 1,
-#     rate = 16000,
-#     input = True,
-#     frames_per_buffer = 8192
-# )
+    # for testing on local mic
+    # import pyaudio
+    # mic = pyaudio.PyAudio()
+    # stream = mic.open(
+    #     format = pyaudio.paInt16,
+    #     channels = 1,
+    #     rate = 16000,
+    #     input = True,
+    #     frames_per_buffer = 8192
+    # )
 
-# while True:
-#     data = stream.read(4096)
+    # while True:
+    #     data = stream.read(4096)
 
-#     if recognizer.AcceptWaveform(data):
-#         text = recognizer.Result()
-#         print(text[14: -3])
+    #     if recognizer.AcceptWaveform(data):
+    #         text = recognizer.Result()
+    #         print(text[14: -3])

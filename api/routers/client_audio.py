@@ -31,20 +31,22 @@ def open_wav(path):
 async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
     '''Recives raw RAW audio frames from client, stores them in hour long segments and places them in app() state for other endpoints/services to access.'''
     #TODO: have client send audio details in request body to dynamically take care of any audio channel/rate/etc
-
     await websocket.app.manager.connect(websocket)
 
     # create identifier
-    client_host = f"{websocket.client.host}:{str(websocket.client.port)}"
-    client_id = f"{client_name}-{client_host}"
+    client_id = f"{client_name}-{websocket.client.host}:{str(websocket.client.port)}"
+    state_path = f"client_audio_frames/{client_id}"
 
     # Check if app state for this client already exists, if so, then the device is already connected and attempting a duplicate connection
-    if client_id in websocket.app.state.audio_frames.keys():
-        raise HTTPException(status_code = 409, detail = "Duplicate Connection found, rejecting") # reject the connection 
+    if state_path in websocket.app.state_manager.all_states():
+        raise HTTPException(status_code = 409, detail = "Duplicate client_audio Connection found on same client, rejecting") # reject the connection 
     # TODO: this shouldnt work: https://stackoverflow.com/questions/71254130/fastapi-reject-a-websocket-connection-with-http-response
 
-    #add state field for this client to app(), init value to null
-    websocket.app.state.audio_frames[client_id] = ""
+    # init state queue
+    websocket.app.state_manager.create_new_state(
+        state_path,
+        is_queue = True
+    )
 
     try:
         while True:
@@ -61,35 +63,27 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
                 print(f'{audio_file_path}/{client_name}')
                 pathlib.Path(f'{audio_file_path}/{client_name}').mkdir(parents=True, exist_ok=True)            
 
-            # Check if file exists
-            if not os.path.isfile(file):
-                # Create file 
-                await to_thread(lambda: open(file,"a").close()) # Have asyncio execute task on seperate thread  
+            # Create file if doesnt exist
+            if not os.path.isfile(file): await to_thread(lambda: open(file,"a").close()) 
 
             # open write connection to curr wave file
-            curr_dir = await to_thread(open_wav, file) # takes blocking function and executes it in another thread, and awaits return value
+            curr_dir = open_wav(file)
 
             # receive audio frames
             while True:
-                # audio frame
-                frame = await websocket.receive() 
-
-                # check for client disconnect 
-                if frame["type"] == "websocket.receive": 
+                # check for client disconnect while receiving frame
+                if (frame := await websocket.receive() )["type"] == "websocket.receive": 
                     frame = pickle.loads(frame["bytes"])
                 else: raise WebSocketDisconnect
                     
-                # access relevant app() state, write new frame to it
-                websocket.app.state.audio_frames[client_id] = frame
+                # access relevant app() state, write new frame to it (appends new frame to queue, ready for consumption)
+                await websocket.app.state_manager.update_state(state_path, frame, is_queue=True)
 
-                # write frame to wav file
-                curr_dir.writeframesraw(websocket.app.state.audio_frames[client_id])
+                curr_dir.writeframesraw(frame) # write frame
 
-                # calc how long we've been writing to current wav file
-                gap = ((datetime.now()-start_date).total_seconds())/60/60 #Returns time gap in hours
-
-                #Check if gap has reached an hour, if so restart loop and start archiving into new file
-                if gap >= 1: break
+                # Calc how long we've been writing to current wav file
+                # Check if gap has reached an hour, if so restart loop and start archiving into new file
+                if (gap := ((datetime.now()-start_date).total_seconds())/60/60) >= 1: break  #computes time gap in hours
                     
             #Release write object
             await to_thread(curr_dir.close)
@@ -101,8 +95,7 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
         print(f"Unknown Error caused client {client_id} disconnect: {e}")
 
     finally: 
-        del websocket.app.state.audio_frames[client_id] # destroy associated app() state
+        websocket.app.state_manager.destroy_state(state_path) # destroy associated app() state
         curr_dir.close()
         websocket.app.manager.disconnect(websocket)
         
-

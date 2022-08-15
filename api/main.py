@@ -1,3 +1,4 @@
+from multiprocessing import cpu_count
 import uvicorn
 import asyncio
 import yaml
@@ -8,6 +9,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from dependencies.ws_manager import ConnectionManager
 from dependencies.commandSessionManager import CommandSessionManager
 from dependencies.external_transcription_handler import BackgroundRunner
+from dependencies.state_manager import StateManager
+
 from routers.client_video import router as client_video
 from routers.client_audio import router as client_audio 
 from routers.async_queue_comm import router as queue_comms
@@ -27,27 +30,17 @@ app.include_router(worker_comm)
 #api configuration settings
 settings = yaml.safe_load(open("./settings.yaml")) 
 
-app.state.pending_commands = []
-
 # websocket connection manager
 app.manager = ConnectionManager()
-
 # command session manager
+app.state.pending_commands = []
 app.command_manager = CommandSessionManager(app.state.pending_commands)
-
 # start background runner for monitoring external transcription service
 runner = BackgroundRunner()
+# Bind instance of StateManager 
+app.state_manager = StateManager()
 
-# configure state for audio frames
-app.state.audio_frames = dict() # holds { 'client_id' : 'frame' }
 
-# configure state for conversation 'frames'
-app.state.convo_phrases = dict() # holds { 'client_id': 'phrase'} 
-#TODO: add constraint to prevent duplicate client_id's. If the case, reject the request and send back appropriate error msg to client
-    #maybe have middleware check request and compare with app() state
-
-# configure state for async workers' current responses
-app.state.async_worker_phrases = dict() # holds { 'client_id': 'phrase' }, worker is referenced by its corresponding client's id
 
 #TODO: not secure but necessary for allowing connections. Find better solution
 app.add_middleware(
@@ -70,10 +63,19 @@ async def root():
 @app.get("/debug")
 async def debug():
     '''Debugging purposes'''
-    return {
-        "Websockets": [ws.url for ws in app.manager.active_connections],
-        "Pending Commands": app.state.pending_commands
-    }
+    return f'''
+        "Websockets": {[ws.url for ws in app.manager.active_connections]}
+        "Pending Commands": {app.state.pending_commands}
+        "Command Sessions": {app.command_manager}
+        "Current app() state for audio frames": {[state for state in app.state_manager.all_states() if "client_audio" in state]}
+        "Current app() state for convo text phrases": {[state for state in app.state_manager.all_states() if "convo_phrases" in state]}
+    '''
+
+
+@app.on_event("startup")
+async def init_state_manager():
+    """Initializes state manager, which operates on seperate threads (one thread per new piece of state"""
+    app.state_manager.init_manager()
 
 
 @app.on_event("startup")
@@ -98,16 +100,25 @@ async def shutdown_db_client():
     app.mongo_client.close()
 
 
+@app.on_event("shutdown")
+async def shutdown_state_manager():
+    app.state_manager.shutdown_manager()
+
+
 
 
 if __name__ == "__main__":
+    # https://stackoverflow.com/questions/72374634/how-many-uvicorn-workers-do-i-have-to-have-in-production
+    num_workers = (2* cpu_count()) + 1
     uvicorn.run(  
         "main:app",
-        host="localhost",
+        host=settings["host_ip"],
         reload=True,
-        port=settings["host_port"]
+        port=settings["host_port"],
+        workers=num_workers
     )
 
     
+
 
 

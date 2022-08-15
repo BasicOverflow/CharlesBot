@@ -142,7 +142,8 @@ class CommandSessionManager():
 
     async def deactivate_session(self, client_id: str) -> None:
         '''Makes command session inactive'''
-        session = self.search_session(client_id)
+        if not (session := self.search_session(client_id)): return 
+        
         session.session_ongoing = False
         await session.update_session_termination_db() #updates mongodb document
         self.active_sessions.remove(session)
