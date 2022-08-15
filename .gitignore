@@ -1,6 +1,5 @@
 # ignore big model files in speech_transcription/models directory
-*external-services\speech-transcription\models
-!.py
+external-services/speech-transcription/models/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
