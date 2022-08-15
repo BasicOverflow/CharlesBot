@@ -1,6 +1,14 @@
+# ignore big model files in speech_transcription/models directory
+*/C:\Users\Peter\Desktop\CharlesBot\external-services\speech-transcription\models
+!.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+
+#pycache
+.pyo
+.pyc
 
 # C extensions
 *.so
