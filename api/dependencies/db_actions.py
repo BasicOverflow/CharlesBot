@@ -20,7 +20,8 @@ async def create_convo_document(cursor: any, session_id: str) -> None:
 async def log_conversation_piece(cursor: any, session_id: str, phrase: str, source: str) -> None:
     '''Inserts a parts of the ongoing conversation from the command session'''
     # pull conversation array
-    convo = await cursor.find_one({"_id":session_id})["conversation"]
+    convo = await cursor.find_one({"_id":session_id})
+    convo = convo["conversation"]
 
     # add phrase to convo
     convo.append({ "source":source, "content":phrase })

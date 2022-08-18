@@ -14,7 +14,7 @@ async def AsyncQueueCommunications(websocket: WebSocket):
         prev_list = []
         while True:
             # print(pending_commands) if pending_commands != [] else None
-            await asyncio.sleep(0.25)
+            await asyncio.sleep(0.5)
             
             if prev_list == websocket.app.state.pending_commands: #if pending_commands hasnt chanted
                 continue

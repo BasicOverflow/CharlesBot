@@ -58,6 +58,9 @@ class StateManager(object):
     def create_new_state(self, state_path: str, is_queue=False) -> None:
         """Creates new empty state by populating dict with empty field. on_write_event should take in new state as first/only argument
         is_queue allows for piece of state to be a queue that can hold multiple values and be consumed over time."""
+        # check if state already exists, if so do nothing
+        if state_path in self.all_states(): return
+
         #split path
         keys = re.split(r"/|\|.", state_path)
 
@@ -267,7 +270,27 @@ if __name__ == "__main__":
   
    
     
+# -Examples of this being needed:
+#     1.) client_audio:
+#         -Upon new client connection, creates new state
+#         -Endpoint receives frames from client, constantly writes them to state
+#         -Also writes new frames to file (blocking)
+#         -Upon client disconnect, destroys state
 
+#     2.) BackgroundRunner.monitor_new_connections:
+#         -Checks all audio frame states for new spawnings/deletions
+#         -A new state spawns a new ws_transcription_client()
+#         -A deletion of state causes some other action
+
+#     3.) BackgroundRunner.ws_transcription_client:
+#         -Constantly reads peice of state (audio_frame)
+#         -Upon new frame, sends it to an external service
+#         -Receives phrases back from service from time to time, updates another peice of state (convo_phrase)
+
+#     4.) conversational_text:
+#         -Constantly (not as constantly as client_audio) checks for new convo phrases (reads state) from client
+#         -Then constantly looks at other app state for async worker response
+#         -Sends back any new state to client (one-way protocol)
 
 
 

@@ -1,6 +1,8 @@
+import yaml
 import json
 import inspect
 import asyncio
+import os
 from typing import Callable, Dict
 
 from fastapi import WebSocket
@@ -14,7 +16,8 @@ from fastapi import WebSocket
         #imediately, declare a ws_handler.recv() under the send
         #repeat this as desired
 
-root_dir = json.load(open("./settings.json", "r"))["intent_classifier_dir"] #TODO: convert to yaml
+root_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "api\dependencies\intent_classification")
+
 
 
 class Feature(object):

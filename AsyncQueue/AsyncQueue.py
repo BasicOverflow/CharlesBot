@@ -6,7 +6,6 @@ import yaml
 import json
 from colorama import Fore
 
-from AsyncQueue.utils.feature import Feature
 
 colorama.init(autoreset=True)
 
@@ -82,7 +81,7 @@ class AsyncQueue(object):
             await asyncio.sleep(0.25)
     
 
-    async def ws_api_client2(self, uri: str) -> None:
+    async def _ws_api_client(self, uri: str) -> None:
         '''Keeps ws connection with API and communicates or command updates to queue.'''
         async with websockets.connect(uri) as ws:
 
@@ -117,7 +116,7 @@ class AsyncQueue(object):
         '''A wrapper for the above method'''
         while True:
             try:
-                await self.ws_api_client2(uri)
+                await self._ws_api_client(uri)
             except Exception as e:
                 print(f"{Fore.RED}Queue unable to connect with API: {Fore.WHITE}{e}. Trying again...")
 
@@ -138,7 +137,7 @@ class AsyncQueue(object):
         return ws_decorator
         
 
-    def add_task(self ,command: Dict, feature_object: Feature) -> None:
+    def add_task(self ,command: Dict, feature_object) -> None:
         '''Takes the task to be constructed from the command and wraps it in a ws client before inserting it into event loop'''
         client_id = command["client_id"]
         client_url = f"ws://{self.api}/ws/queue_worker/{client_id}"
@@ -170,7 +169,7 @@ class AsyncQueue(object):
         self.event_trigger = True
 
 
-    def add_feature(self, feaure_obj: Feature) -> None:
+    def add_feature(self, feaure_obj) -> None:
         self.features.append(feaure_obj)
 
 

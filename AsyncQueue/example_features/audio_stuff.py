@@ -196,7 +196,7 @@ async def filter_archived_audio(timegap: int = 12) -> None:
 
 
 
-# # #  Where feature objects are created to be imported by main.py  # # #
+# # #  feature objects to be imported by main.py  # # #
 
 audio_displayer = Feature(display_audio,    
     {

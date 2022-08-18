@@ -10,6 +10,8 @@ from dependencies.ws_manager import ConnectionManager
 from dependencies.commandSessionManager import CommandSessionManager
 from dependencies.external_transcription_handler import BackgroundRunner
 from dependencies.state_manager import StateManager
+from dependencies.intent_classification.classifier import IntentClassifier
+from dependencies.intent_classification.server import monitor_dataset
 
 from routers.client_video import router as client_video
 from routers.client_audio import router as client_audio 
@@ -39,6 +41,8 @@ app.command_manager = CommandSessionManager(app.state.pending_commands)
 runner = BackgroundRunner()
 # Bind instance of StateManager 
 app.state_manager = StateManager()
+#intenet classifier
+app.intent_classifier = IntentClassifier()
 
 
 
@@ -70,6 +74,13 @@ async def debug():
         "Current app() state for audio frames": {[state for state in app.state_manager.all_states() if "client_audio" in state]}
         "Current app() state for convo text phrases": {[state for state in app.state_manager.all_states() if "convo_phrases" in state]}
     '''
+
+
+@app.on_event("startup")
+async def init_intent_classifier():
+    """Loads model for intent classifier, activates corountine to monitor changes/retraining of dataset"""
+    asyncio.create_task(monitor_dataset(app.intent_classifier))
+    await asyncio.to_thread(app.intent_classifier.load)
 
 
 @app.on_event("startup")

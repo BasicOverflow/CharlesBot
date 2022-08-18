@@ -1,4 +1,5 @@
 import asyncio
+from aiostream import stream #allows for joining multiple async generators
 from fastapi import APIRouter, WebSocket
 from websockets.exceptions import ConnectionClosedError
 from starlette.websockets import WebSocketDisconnect
@@ -7,47 +8,87 @@ from starlette.websockets import WebSocketDisconnect
 
 router = APIRouter()
 
-#Looks at app() state
 
 @router.websocket("/ws/conversational_text/{client_name}")
 async def convo_text(websocket: WebSocket, client_name: str):
-    '''Receives inqueries from client, updates app() state, then waits for new response from async worker by looking at other app() state'''
-    # this endpoint only looks at all the app() states and sends everything one way to client
-
-     #TODO: check if in a command session 
-        # if not, logic needs to change so that its not waiting for responses from worker (which doesnt even exist if not in a command session)
-        # instead, receive text from client and check if its a command, if it is, build formal command request and ship it
-            # then init a command session and enter proper logic to listen to worker
-
+    '''Receives inqueries from client, updates app() state, then waits for new response from async worker by looking at other app() state. Sends all comunication back to client device and 
+    Manages command sessions. '''
     await websocket.app.manager.connect(websocket)
 
-    # create identifier
-    client_id = f"{client_name}-{websocket.client.host}"
+    # create identifier for client's audio endpoint, not this endpoint (hence the port+1, since port number assigned always (i think) will be 1 more than previous port assigned)
+    client_id = f"{client_name}-{websocket.client.host}:{str(websocket.client.port+1)}" 
+
+    # define async generators to stream labeled conversational phrases from state manager
+    async def client_convo_stream():
+        """Generator that yields transcribed phrases from client and returns them in labeled dict"""
+        async for phrase in websocket.app.state_manager.read_state(f"convo_phrases/{client_id}", is_queue=False):
+            yield {"client": phrase} 
+
+    async def async_worker_stream():
+        """Generator that yields async worker responses and returns them in labeled dict"""
+        async for phrase in websocket.app.state_manager.read_state(f"async_worker_phrases/{client_id}", is_queue=False):
+            yield {"worker": phrase}
 
     try:
 
-        # TODO: remove associated app() state upon disconect (convo phrasees)
-
-        #Have initial while True loop that waits for changes in app() client phrase state
-            # upon each change, do logic to check if its a valid command and create command session, and break out of loop if it is
-            # if its not, iterate again through loop
-        
-        #then next loop, first wait for changes to
-
-
-        # in each loop, send any new updates in state (client and worker) to client, and label them as such (client or worker phrase)
-            # and log them
-            # client only reeives, sends nothing to this endpoint
-
-        prev_audio_phrase = ""
-        await asyncio.sleep(1)
-        while True:
-
+        # add logic to wait for other endpoint/external services to be established, but not forever
+        print("Conversational_text endpoint waiting for external transcription to be established...")
+        while f"client_audio_frames/{client_id}" not in websocket.app.state_manager.all_states() and f"convo_phrases/{client_id}" not in websocket.app.state_manager.all_states():
             await asyncio.sleep(0.5)
+        print("Conversational_text endpoint: external transcription has been established...")
 
-            if (curr_audio_phrase := websocket.app.state.convo_phrases[client_id]) != prev_audio_phrase:
-                prev_audio_phrase = curr_audio_phrase
-                await websocket.send_text(curr_audio_phrase)
+        # read state from client's convo_phrases & the corresponding async worker's phrases
+        combine = stream.merge(client_convo_stream(), async_worker_stream()) # create combined async stream
+        async with combine.stream() as streamer:
+            async for item in streamer:
+                # if list(item.values()) is [None]: raise KeyError
+                print(f"CONVO TEXT: {item}")
+
+                # send each message directly to client (one way)
+                await websocket.send_json(item)
+
+                ### COMMAND SESSION LOGIC BEGINS ###
+
+                # upon receiving client phrase, check if in a command session 
+                # also check if current session has been deactivated, if so, reset to next iteration to try and start new session
+                session = websocket.app.command_manager.search_session(client_id)
+                if "client" in item.keys() and ((session == False) or (not session.session_ongoing)):
+                    # if not, receive text from client and check if its a command, if it is, build formal command request and ship it
+                    # then init a command session and enter proper logic to listen to worker
+
+                    # make intent classifier query:
+                    query = await websocket.app.intent_classifier.query_intent(item["client"])
+                    print(query)
+
+                    # if query returns actual intent, init command session and continue on with logic
+                    if query[1].lower() not in ["unknown", "unknown2"]:
+                        print("Creating command session...")
+                        # upon session creation, formal request body is prepared & shipped off to queue, establishing async worker
+                        session = await websocket.app.command_manager.create_session(client_id, query)
+                        if not session: raise Exception("duplicate command sessions detected")
+                        await websocket.app.command_manager.connect_to_session(client_id, True)
+
+
+                # if no command sesion was started, ignore below logic and reset to new iteration
+                if not session: continue
+
+                # if already in command session, carry on with rest of logic:
+                session = websocket.app.command_manager.search_session(client_id)
+
+                # logic when phrase is from client:
+                if "client" in item.keys():
+                    # log phrase, make sure not to relog the initial client phrase again 
+                    # do this by looking at current convo log, if there's no async worker, then the worker hasn't responded yet and the current client phrase is the initial one
+                    convo = await session.get_full_convo() if type(session) != bool else []
+                    for phrase in convo: 
+                        if phrase["source"] == "queue": # if async worker response found, all clear to log current clinet phrase
+                            await session.log_client_phrase(item["client"])
+                    # await session.log_client_phrase(item["client"])
+
+                # logic when phrase is from async worker
+                if "worker" in item.keys():
+                    # idk, the async woker logs the phrase, so idk if anything else needs to be done
+                    pass
 
 
     except (WebSocketDisconnect, ConnectionClosedError):
@@ -56,10 +97,14 @@ async def convo_text(websocket: WebSocket, client_name: str):
     except KeyError:
         print(f"Detected disconnect in client {client_id}'s audio endpoint. Therefore, disconnecting associated conversational_text (for audio) endpoint as well.")
     
+    else:
+        print("Misc error with convo text endpoint")
+
     finally:
         #shut down command session and disconnect
         await websocket.app.command_manager.deactivate_session(client_id)
         websocket.app.manager.disconnect(websocket)
+        print("Conversational text endpoint shutdown")
 
     
 

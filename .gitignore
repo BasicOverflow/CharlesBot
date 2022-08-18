@@ -6,8 +6,12 @@ __pycache__/
 *.py[cod]
 
 #pycache
-.pyo
-.pyc
+*.pyo
+*.pyc
+
+# neuralintents models
+*.h5
+*.pkl
 
 # C extensions
 *.so

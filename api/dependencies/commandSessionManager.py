@@ -2,8 +2,7 @@ from typing import Dict, List, Tuple, Union
 from pydantic import BaseModel
 from uuid import uuid4
 import asyncio
-
-from dependencies.db_actions import *
+from .db_actions import *
 
 
 
@@ -13,7 +12,6 @@ class CommandRequest(BaseModel):
     args: List[str]
     kwargs: Dict
     client_id: str
-
 
 
 class CommandSession():
@@ -28,9 +26,7 @@ class CommandSession():
         self.async_worker_connected: bool = True
         self.session_ongoing: bool = True # indicates that conversation w/ client is still active
         self.session_id: str = str(uuid4()) # unique identifier for session
-
-        # create document for session in db 
-        asyncio.run( self.create_session_db_document(classification[0]) )
+        self.convo = []
 
         # Create formal command request body using classification from intent classifier
         self.ship_formal_command(classification)
@@ -61,11 +57,13 @@ class CommandSession():
     async def log_client_phrase(self, phrase: str) -> None:
         '''Log phrase that came from client'''
         await log_conversation_piece(self.cursor, self.session_id, phrase, "client")
+        self.convo = await self.get_full_convo()
 
 
     async def log_worker_phrase(self, phrase: str) -> None:
         '''Log phrase that came from async worker'''
         await log_conversation_piece(self.cursor, self.session_id, phrase, "queue")
+        self.convo = await self.get_full_convo()
 
 
     async def get_full_convo(self) -> List[Dict]:
@@ -85,7 +83,7 @@ class CommandSession():
         Client: {self.client_id}, {"Connected" if self.client_connected else "Not Connected"}
         Async Worker: {"Connected" if self.async_worker_connected else "Not Connected"}
         Status: {"Ongoing" if self.session_ongoing else "Finished"}
-        Convo: { [i for i in self.get_full_convo()] }'''
+        Convo: { [i for i in self.onvo] }'''
 
 
 
@@ -112,13 +110,15 @@ class CommandSessionManager():
         return False
 
 
-    async def create_sesssion(self, client_id: str, classification: Tuple[str, str]) -> bool:
+    async def create_session(self, client_id: str, classification: Tuple[str, str]) -> bool:
         '''Boolean return value indicates if connection was successful'''
         # Dont allow for multiple sessions with the same id to exist
         if self.search_session(client_id): return False
 
         assert self.cursor is not None #make sure the db cursor was initialized and passed to the session manager before proceeding
         session = CommandSession(client_id, classification, self.pending_commands, self.cursor)
+        await session.create_session_db_document(classification[0])  # create document for session in db 
+
         self.active_sessions.append(session)
         return True
 
@@ -144,6 +144,9 @@ class CommandSessionManager():
         '''Makes command session inactive'''
         if not (session := self.search_session(client_id)): return 
         
+        # if already deactivated, do nothing
+        if not session.session_ongoing: return
+
         session.session_ongoing = False
         await session.update_session_termination_db() #updates mongodb document
         self.active_sessions.remove(session)

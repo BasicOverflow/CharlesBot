@@ -36,6 +36,10 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
     # create identifier
     client_id = f"{client_name}-{websocket.client.host}:{str(websocket.client.port)}"
     state_path = f"client_audio_frames/{client_id}"
+    
+    # create state for the corresponding async worker (which doesn't exist yet) to ensure logic in other endpoints flows smoothly
+    async_worker_state_path = f"async_worker_phrases/{client_id}"
+    websocket.app.state_manager.create_new_state(async_worker_state_path, is_queue=False)
 
     # Check if app state for this client already exists, if so, then the device is already connected and attempting a duplicate connection
     if state_path in websocket.app.state_manager.all_states():
@@ -83,7 +87,7 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
 
                 # Calc how long we've been writing to current wav file
                 # Check if gap has reached an hour, if so restart loop and start archiving into new file
-                if (gap := ((datetime.now()-start_date).total_seconds())/60/60) >= 1: break  #computes time gap in hours
+                if ((datetime.now()-start_date).total_seconds())/60/60 >= 1: break  #computes time gap in hours
                     
             #Release write object
             await to_thread(curr_dir.close)

@@ -6,7 +6,6 @@ audio_storage_root_path: 'C:\Users\Peter\Desktop\'
 asr_model_path: r'C:\Users\peter\Desktop\CharlesBot\external-services\speech-transcription\models\vosk-model-small-en-us-0.15'
 
 
-
 # current transcription model path
 # external ASR server port
 # external intent classifier port

@@ -13,13 +13,13 @@ async def AsyncWorkerCommunications(websocket: WebSocket, client_id: str):
     await websocket.app.manager.connect(websocket)
 
     # init app() state for this async worker
-    websocket.app.state.async_worker_phrases[client_id] = ""
+    state_path = f"async_worker_phrases/{client_id}"
+    websocket.app.state_manager.create_new_state(state_path, is_queue=False)
 
     try:
         # connect to the command session
         session = websocket.app.command_manager.connect_to_session(client_id, False)
 
-        prev_client_resp = ""
         while True:
             # check to see if client is still connected to session, if not then disconnect #TODO: this might cause problems, test it
             if not session.client_connected: 
@@ -33,15 +33,15 @@ async def AsyncWorkerCommunications(websocket: WebSocket, client_id: str):
             session.log_worker_phrase(worker_resp)
 
             # save that response to app() state for other endpoint to access
-            websocket.app.state.async_worker_phrases[client_id] = worker_resp
+            await websocket.app.state_manager.update_state(state_path, worker_resp, is_queue=False)
 
-            # Wait for new client followup #TODO: this might not work, test it 
-            while (client_resp := websocket.app.state.convo_phrases[client_id]) == prev_client_resp: await asyncio.sleep(0.05)
-            prev_client_resp = client_resp = websocket.app.state.convo_phrases[client_id]
+            # Wait for new client followup, awaits until state updates
+            client_resp = await websocket.app.state_manager.read_state(f"convo_phrases/{client_id}")
 
             # send new response to worker
             await websocket.send_text(client_resp)
             
     except (WebSocketDisconnect, exceptions.ConnectionClosedError):
         del websocket.app.state.async_worker_phrases[client_id] # destroy associated app() state
+        await websocket.app.command_manager.deactivate_session(client_id) # deactivate command session
         websocket.app.manager.disconnect(websocket)
