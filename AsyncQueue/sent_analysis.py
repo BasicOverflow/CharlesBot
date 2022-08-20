@@ -7,12 +7,7 @@ import textblob
 import pandas as pd
 import re
 import datetime 
-#To resolve some stupid import from features issue I dont fully know about^
-import sys, os
-
-import websockets
-sys.path.append(f"{os.getcwd()}/TaskQueue")
-from features.feature import Feature
+from utils.feature import Feature
 
 
 TIMEGAP = 7

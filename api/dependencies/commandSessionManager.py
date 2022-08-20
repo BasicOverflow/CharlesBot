@@ -83,7 +83,7 @@ class CommandSession():
         Client: {self.client_id}, {"Connected" if self.client_connected else "Not Connected"}
         Async Worker: {"Connected" if self.async_worker_connected else "Not Connected"}
         Status: {"Ongoing" if self.session_ongoing else "Finished"}
-        Convo: { [i for i in self.onvo] }'''
+        Convo: { [i for i in self.convo] }'''
 
 
 

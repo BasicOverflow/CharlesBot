@@ -10,7 +10,7 @@ from fastapi import WebSocket
 #NOTE: FOR FEATURES THAT ACCEPT A WS CONNECTION:
     #The param in the function definition for the ws conn must be the last argument
         #*NOT the last kwarg, the last arg*
-    #The function has to send "Command Completed" as the last event of the ws client passed
+    # last action of ws handler within corountine must be a SEND
     #if you want to send multiple messages in a row to the client, do the following:
         #send the message with '++' somehwere in the string
         #imediately, declare a ws_handler.recv() under the send
@@ -95,18 +95,17 @@ class Feature(object):
 
 
 
+
 # Test feature:
 async def tester(user_str: str, ws_handler: WebSocket, pee: str = "na na na nig") -> None:
     try: 
-        # print(user_str)
-        # print(ws_handler)
         await ws_handler.send(f"Queue is active, provide input:")
         client_response = await ws_handler.recv()
-        print(f"Client response: {client_response}")
-        #finish up task
-        await ws_handler.send("test Command Completed")
-        await asyncio.sleep(0.05)
-        await ws_handler.close()
+        # print(f"Client response received: {client_response}")
+        await ws_handler.send(f"Client response received: {client_response}, input second inquery:")
+        client_response2 = await ws_handler.recv()
+        await ws_handler.send(f"second response received: {client_response2}, command sess completed")
+        # await ws_handler.close()
     except Exception as e:
         print(e)
 

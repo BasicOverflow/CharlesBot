@@ -1,16 +1,18 @@
 from datetime import timedelta, datetime
 import asyncio
+import yaml
 #Console Window stuff
 import sys, os
 from subprocess import Popen, PIPE, CREATE_NEW_CONSOLE
 import json
 
 from fastapi import WebSocket
-sys.path.append(f"{os.getcwd()}/TaskQueue")
-from features.feature import Feature
+from utils.feature import Feature
 
 #root dir
-audio_directory = json.load(open("./settings.json", "r"))["audio_file_root_path"]
+root_dir = os.path.join( os.path.dirname(os.path.dirname(__file__)), "settings.yaml")
+audio_directory = yaml.safe_load(open(root_dir))["audio_storage_root_path"]
+
 #constants
 POSSIBLE_TIME_UNITS = ["month","week","day","hour","minute"]
 PAST_PHRASES = ["past", "before", "last"]

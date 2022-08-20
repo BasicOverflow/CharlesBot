@@ -1,8 +1,8 @@
 # host_ip: 'localhost'
 host_ip: '10.0.0.253'
 host_port: 8004
-video_storage_root_path: 'C:\Users\Peter\Desktop\'
-audio_storage_root_path: 'C:\Users\Peter\Desktop\'
+video_storage_root_path: 'C:\Users\Peter\Desktop\video'
+audio_storage_root_path: 'C:\Users\Peter\Desktop\audio'
 asr_model_path: r'C:\Users\peter\Desktop\CharlesBot\external-services\speech-transcription\models\vosk-model-small-en-us-0.15'
 
 

@@ -1,16 +1,16 @@
-import cv2
+import yaml
 from fastapi import WebSocket
-import numpy as np
-from datetime import date, datetime,timedelta
+from datetime import datetime, timedelta
 import os
-import json
 #To resolve some stupid import from features issue I dont fully know about^
 import sys, os
 sys.path.append(f"{os.getcwd()}/TaskQueue")
-from .features.feature import Feature
+from utils.feature import Feature
 
 #root dir
-video_directory = json.load(open("./settings.json", "r"))["video_file_root_path"]
+root_dir = os.path.join( os.path.dirname(os.path.dirname(__file__)), "settings.yaml")
+video_directory = yaml.safe_load(open(root_dir))["video_storage_root_path"]
+
 #constants
 POSSIBLE_TIME_UNITS = ["month","week","day","hour","minute"]
 PAST_PHRASES = ["past", "before", "last"]

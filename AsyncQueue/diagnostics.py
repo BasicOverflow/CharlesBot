@@ -1,15 +1,14 @@
 import json
-import os,sys
-
+import os
+import yaml
 from fastapi import WebSocket
-sys.path.append(f"{os.getcwd()}/TaskQueue")
-from features.feature import Feature
+from utils.feature import Feature
 import requests
-import websockets
 
 #root dir
-api_host = json.load(open("./settings.json", "r"))["api_ip"]
-api_port = str(json.load(open("./settings.json", "r"))["api_port"])
+root_dir = os.path.join( os.path.dirname(os.path.dirname(__file__)), "settings.yaml")
+api_host = yaml.safe_load(open(root_dir))["host_ip"]
+api_port = yaml.safe_load(open(root_dir))["host_port"]
 
 # critical diagnostics:
     # check API 

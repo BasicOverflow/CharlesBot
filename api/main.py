@@ -1,8 +1,10 @@
 from multiprocessing import cpu_count
+from urllib import response
 import uvicorn
 import asyncio
 import yaml
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -64,15 +66,17 @@ async def root():
     return "Poop, stank even"
 
 
-@app.get("/debug")
+@app.get("/debug", response_class=HTMLResponse)
 async def debug():
     '''Debugging purposes'''
-    return f'''
-        "Websockets": {[ws.url for ws in app.manager.active_connections]}
-        "Pending Commands": {app.state.pending_commands}
-        "Command Sessions": {app.command_manager}
-        "Current app() state for audio frames": {[state for state in app.state_manager.all_states() if "client_audio" in state]}
-        "Current app() state for convo text phrases": {[state for state in app.state_manager.all_states() if "convo_phrases" in state]}
+    return f'''<br>
+    <body style="background-color:#979797">
+        "Websockets": {[ws.url for ws in app.manager.active_connections]}<br>
+        "Pending Commands": {app.state.pending_commands}<br>
+        "Command Sessions": {app.command_manager}<br>
+        "Current app() state for audio frames": {[state for state in app.state_manager.all_states() if "client_audio" in state]}<br>
+        "Current app() state for convo text phrases": {[state for state in app.state_manager.all_states() if "convo_phrases" in state]}<br>
+    </body>
     '''
 
 
