@@ -116,15 +116,12 @@ async def perform_sent_analysis(ws_handler: WebSocket) -> None:
 # # #  Where feature objects are created to be imported by main.py  # # #
 
 sentiment_analyzer = Feature(perform_sent_analysis,
-    {
-    "tag": "sentiment analysis",
-    "patterns": [
+    "sentiment analysis",
+    [
     "Perform a sentiment analysis", 
     "Do a sentiment analysis", 
-    "Make a sentiment analysis on this"],
-    "responses": "",
-    "context_set": ""
-    }
+    "Make a sentiment analysis on this"
+    ]
 )
 
 if __name__ == "__main__":

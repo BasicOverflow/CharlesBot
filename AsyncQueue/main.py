@@ -18,8 +18,8 @@ from diagnostics import system_diagnostics
 CharlesQ = AsyncQueue()
 
 #Add features 
-CharlesQ.add_feature(audio_displayer)
 CharlesQ.add_feature(test)
+CharlesQ.add_feature(audio_displayer)
 CharlesQ.add_feature(audio_keeper)
 CharlesQ.add_feature(audio_purger)
 CharlesQ.add_feature(video_displayer)

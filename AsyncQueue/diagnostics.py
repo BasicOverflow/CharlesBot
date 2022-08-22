@@ -98,12 +98,13 @@ async def system_diagnostics(ws_handler: WebSocket) -> None:
 
 
 
-system_diagnostics = Feature(system_diagnostics,    
-    {"tag": "System Diagnostics",
-    "patterns": ["perform system diagnostics", "Run diagnostics", "do system diagnostics"],
-    "responses": "",
-    "context_set": ""
-    }
+system_diagnostics = Feature(system_diagnostics,
+    "System Diagnostics",
+    [
+    "perform system diagnostics", 
+    "Run diagnostics",
+    "do system diagnostics"
+    ]
 )
 
 
@@ -120,8 +121,6 @@ async def test() -> None:
     print(fourth_test)
 
  
-
-
 if __name__ == "__main__":
     import asyncio
 

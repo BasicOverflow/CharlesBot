@@ -1,9 +1,9 @@
+from urllib import response
 import yaml
 import json
 import inspect
-import asyncio
 import os
-from typing import Callable, Dict
+from typing import Callable, List
 
 from fastapi import WebSocket
 
@@ -28,11 +28,16 @@ class Feature(object):
         # the function itself
         # the function's name'''
         
-    def __init__(self, func: Callable, intents: Dict) -> None:
+    def __init__(self, func: Callable, tag: str, user_examples: List[str]) -> None:
         self.func = func
         # print(inspect.getfullargspec(func))
         self.func_params = inspect.getfullargspec(func)[0]
-        self.intents = intents #takes the form of a 'tag' json obj
+        self.intents = {
+            "tag": tag,
+            "patterns": user_examples,
+            "responses": "",
+            "context_set": ""
+        }
         self.func_name = func.__name__
         #call method to update intent.json in constructor
         self.update_intents()
@@ -109,12 +114,9 @@ async def tester(user_str: str, ws_handler: WebSocket, pee: str = "na na na nig"
     except Exception as e:
         print(e)
 
-test = Feature(tester,    
-    {"tag": "test ws",
-    "patterns": ["perform the test feature", "activate websocket tester", "do the websocket client test", "do the websocket test feature", "do the web socket client test"],
-    "responses": "",
-    "context_set": ""
-    }
+test = Feature(tester, 
+    "test ws",
+    ["perform the test feature", "activate websocket tester", "do the websocket client test", "do the websocket test feature", "do the web socket client test"]  
 )
 
 
