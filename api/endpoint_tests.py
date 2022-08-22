@@ -39,6 +39,8 @@ def test_video_archival() -> None:
 
 
 
+# test every endpoint
+# ensure duplicate connections not allowed for any endpoints
 
 
 

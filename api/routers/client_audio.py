@@ -30,21 +30,29 @@ def open_wav(path):
 @router.websocket("/ws/audio/{client_name}")
 async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
     '''Recives raw RAW audio frames from client, stores them in hour long segments and places them in app() state for other endpoints/services to access.'''
-    #TODO: have client send audio details in request body to dynamically take care of any audio channel/rate/etc
-    await websocket.app.manager.connect(websocket)
+    #TODO: have client send audio details in request body to dynamically take care of any audio channel/rate/etc, NOTE: actually, all audio needs to have same settings for transcription model
 
     # create identifier
     client_id = f"{client_name}-{websocket.client.host}:{str(websocket.client.port)}"
     state_path = f"client_audio_frames/{client_id}"
+
+    try:
+        # Check if app state for this client already exists, if so, then the device is already connected and attempting a duplicate connection
+        for state_path in websocket.app.state_manager.all_states():
+            if str(websocket.client.host) in state_path and "client_audio_frames" in state_path:
+                websocket.app.manager.disconnect(websocket)
+                print(f"Duplicate client_audio Connection ({client_id}) found on same client, rejecting") # reject the connection 
+                raise WebSocketDisconnect
+    except Exception as e:
+        print(e)
+        return
+    
+    # otherwise, all clear to accept connection
+    await websocket.app.manager.connect(websocket)
     
     # create state for the corresponding async worker (which doesn't exist yet) to ensure logic in other endpoints flows smoothly
     async_worker_state_path = f"async_worker_phrases/{client_id}"
     websocket.app.state_manager.create_new_state(async_worker_state_path, is_queue=False)
-
-    # Check if app state for this client already exists, if so, then the device is already connected and attempting a duplicate connection
-    if state_path in websocket.app.state_manager.all_states():
-        raise HTTPException(status_code = 409, detail = "Duplicate client_audio Connection found on same client, rejecting") # reject the connection 
-    # TODO: this shouldnt work: https://stackoverflow.com/questions/71254130/fastapi-reject-a-websocket-connection-with-http-response
 
     # init state queue
     websocket.app.state_manager.create_new_state(
@@ -93,10 +101,10 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
             await to_thread(curr_dir.close)
 
     except (WebSocketDisconnect, RuntimeError) as e:
-        print(f"{Fore.GREEN}INFO:     Audio ws for {Fore.LIGHTBLACK_EX}{client_id} droppped: [{e}]")
+        print(f"{Fore.GREEN}INFO:     Audio ws for {Fore.LIGHTBLACK_EX}{client_id} droppped: {e}")
         
-    except Exception as e:
-        print(f"Unknown Error caused client {client_id} disconnect: {e}")
+    # except Exception as e:
+    #     print(f"Unknown Error caused client {client_id} disconnect: {e}")
 
     finally: 
         websocket.app.state_manager.destroy_state(state_path) # destroy associated app() state

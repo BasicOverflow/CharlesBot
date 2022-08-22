@@ -24,12 +24,8 @@ async def AsyncWorkerCommunications(websocket: WebSocket, client_id: str):
         client_state = websocket.app.state_manager.read_state(f"convo_phrases/{client_id}", is_queue=False)
 
         while session.client_connected:
-
             # receive worker's response after client's initial query
             worker_resp = await websocket.receive_text()   
-
-            if worker_resp == "8592gghx73c90s": # # special string to indicate end of session
-                raise WebSocketDisconnect(f"Detected end of session {client_id} for sesssion {session.sesssion_id}, disconnecting associated async worker") 
 
             #log new response
             await session.log_worker_phrase(worker_resp)
@@ -38,16 +34,23 @@ async def AsyncWorkerCommunications(websocket: WebSocket, client_id: str):
             await websocket.app.state_manager.update_state(state_path, worker_resp, is_queue=False)
 
             # Wait for new client followup, awaits until state updates
-            client_resp = await anext(client_state)
+            client_resp = await anext(client_state)                
 
+            # if session termination token found in worker's last response, terminate
+            if "++9++" in worker_resp:
+                raise WebSocketDisconnect(f"Session (client id: {client_id}) termination token received from queue, so disconnecting associated async worker endpoint") 
+
+            # if client disconnected, terminate
             if client_resp is None:
-                raise WebSocketDisconnect(f"Client {client_id} for sesssion {session.sesssion_id} has been disconnected, so disconnecting associated async worker") 
+                raise WebSocketDisconnect(f"Client {client_id} disconnected, so disconnecting associated async worker endpoint") 
 
             # send new response to worker
             await websocket.send_text(client_resp)
+
             
-    except (WebSocketDisconnect, exceptions.ConnectionClosedError):
-        websocket.app.state_manager.destroy_state(state_path) # destroy associated app() state
+    except (WebSocketDisconnect, exceptions.ConnectionClosedError) as e:
+        print(f"Async worker: {e}")
+        # websocket.app.state_manager.destroy_state(state_path) # destroy associated app() state
         await websocket.app.command_manager.deactivate_session(client_id) # deactivate command session
         websocket.app.manager.disconnect(websocket)
 

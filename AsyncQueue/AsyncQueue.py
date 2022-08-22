@@ -130,8 +130,6 @@ class AsyncQueue(object):
                 try:
                     async with websockets.connect(client_url, ping_interval=None) as ws:
                         await func(*args, ws, **kwargs) #assumes the ws_connection is the last argument in the function's defenition
-                        await ws.recv()
-                        await ws.send("8592gghx73c90s") # special string to indicate end of session
                         await ws.close()
                 except Exception as e:
                     print(f"{Fore.RED}WS CLIENT ERROR: {Fore.WHITE}{str(e)}")

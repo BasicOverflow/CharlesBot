@@ -90,27 +90,35 @@ class StateManager(object):
 
     async def read_state(self, state_path: str, is_queue=False) -> any:
         """Returns value of current state. Must specify if state is a queue or not. If state gets deleted, returns None as final yield"""
-        if is_queue: queue = self._get_state_helper(re.split(r"/|\|.", state_path), self.state)
-        prev_state = ""
-        # while the current state exists, yeild unique frames 
-        while state_path in self.state_monitor_queue.keys():
-            if not is_queue:
-                state = self._get_state_helper(re.split(r"/|\|.", state_path), self.state)
-                if state != prev_state: 
-                    yield state
-                    prev_state = state
-            else:
-                yield await queue.get()
-                queue.task_done()
+        try:
+            if is_queue: queue = self._get_state_helper(re.split(r"/|\|.", state_path), self.state)
+            prev_state = ""
+            # while the current state exists, yeild unique frames 
+            while state_path in self.state_monitor_queue.keys():
+                if not is_queue:
+                    state = self._get_state_helper(re.split(r"/|\|.", state_path), self.state)
+                    if state != prev_state: 
+                        yield state
+                        prev_state = state
+                else:
+                    yield await queue.get()
+                    queue.task_done()
 
-            await asyncio.sleep(0)
+                await asyncio.sleep(0)
 
-        yield None
+            yield None
+        except KeyError:
+            pass
 
-    async def update_state(self, state_path: str, new_state_val: any, is_queue=False) -> None:
+    async def update_state(self, state_path: str, new_state_val: any, is_queue=False) -> bool:
         """Updates state with new value"""
+        # check if state is even present
+        if state_path not in self.all_states(): return False
+
         keys = re.split(r"/|\|.", state_path)
         await self._set_state_helper(keys, self.state, new_state_val, is_queue=is_queue)
+
+        return True
 
     #==================#
     #                  #

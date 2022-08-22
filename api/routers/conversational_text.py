@@ -63,6 +63,9 @@ async def convo_text(websocket: WebSocket, client_name: str):
                     # if query returns actual intent, init command session and continue on with logic
                     if query[1].lower() not in ["unknown", "unknown2"]:
                         print("Creating command session...")
+                        # first clear associated state with possibly any data from previous session
+                        await websocket.app.state_manager.update_state(f"convo_phrases/{client_id}", "", is_queue=False)
+                        await websocket.app.state_manager.update_state(f"async_worker_phrases/{client_id}", "", is_queue=False)
                         # upon session creation, formal request body is prepared & shipped off to queue, establishing async worker
                         session = await websocket.app.command_manager.create_session(client_id, query)
                         if not session: raise Exception("duplicate command sessions detected")

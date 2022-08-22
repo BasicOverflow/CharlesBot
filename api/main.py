@@ -71,11 +71,11 @@ async def debug():
     '''Debugging purposes'''
     return f'''<br>
     <body style="background-color:#979797">
-        "Websockets": {[ws.url for ws in app.manager.active_connections]}<br>
-        "Pending Commands": {app.state.pending_commands}<br>
-        "Command Sessions": {app.command_manager}<br>
-        "Current app() state for audio frames": {[state for state in app.state_manager.all_states() if "client_audio" in state]}<br>
-        "Current app() state for convo text phrases": {[state for state in app.state_manager.all_states() if "convo_phrases" in state]}<br>
+        <b>"Websockets":</b> {[ws.url for ws in app.manager.active_connections]}<br>
+        <b>"Pending Commands":</b> {app.state.pending_commands}<br>
+        <b>"Command Sessions":</b> {app.command_manager}<br>
+        <b>"Current app() state for audio frames":</b> {[state for state in app.state_manager.all_states() if "client_audio" in state]}<br>
+        <b>"Current app() state for convo text phrases":</b> {[state for state in app.state_manager.all_states() if "convo_phrases" in state]}<br>
     </body>
     '''
 
