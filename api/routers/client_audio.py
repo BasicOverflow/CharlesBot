@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 import colorama
 from colorama import Fore
-from fastapi import APIRouter, WebSocket, HTTPException
+from fastapi import APIRouter, WebSocket
 from starlette.websockets import WebSocketDisconnect
 
 
@@ -102,9 +102,12 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
 
     except (WebSocketDisconnect, RuntimeError) as e:
         print(f"{Fore.GREEN}INFO:     Audio ws for {Fore.LIGHTBLACK_EX}{client_id} droppped: {e}")
+
+    except AttributeError as e: 
+        print(f"Attribute error occured for audio endpoint: {e}. Probably due to duplicate audio endpoint connections")
         
-    # except Exception as e:
-    #     print(f"Unknown Error caused client {client_id} disconnect: {e}")
+    except Exception as e:
+        print(f"Unknown Error caused client {client_id} disconnect: {e}")
 
     finally: 
         websocket.app.state_manager.destroy_state(state_path) # destroy associated app() state

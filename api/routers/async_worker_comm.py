@@ -3,6 +3,10 @@ from starlette.websockets import WebSocketDisconnect
 from websockets import exceptions
 
 
+#NOTE: for logic with ++, maybe when async worker endpoint receives phrase from queue with ++, it can manipulate the clients state to simulate the client saying something, which
+# will allow for multiple messages in a row one way 
+
+
 router = APIRouter()
 
 

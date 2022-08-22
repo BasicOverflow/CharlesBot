@@ -106,7 +106,6 @@ async def perform_sent_analysis(ws_handler: WebSocket) -> None:
         #Finish off ws events
         # await ws_handler.send("command completed")
         await asyncio.sleep(0.05)
-        await ws_handler.close()
     except Exception as e:
         print(e)
 
