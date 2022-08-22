@@ -13,7 +13,6 @@ router = APIRouter()
 @router.websocket("/ws/queue_worker/{client_id}")
 async def AsyncWorkerCommunications(websocket: WebSocket, client_id: str):
     '''Interacts with the Async Queue workers who send results from client inqueries. Receives results from queue, updates app() state, looks at other app() state for client response, and sends it back to queue'''
-    
     await websocket.app.manager.connect(websocket)
 
     # init app() state for this async worker
@@ -37,11 +36,15 @@ async def AsyncWorkerCommunications(websocket: WebSocket, client_id: str):
             # save that response to app() state for other endpoint to access
             await websocket.app.state_manager.update_state(state_path, worker_resp, is_queue=False)
 
+            # if token found indicating worker wanting to send multiple phrases in a row:
+            if "++" in worker_resp:
+                await websocket.app.state_manager.update_state(f"convo_phrases/{client_id}", "___", is_queue=False)
+
             # Wait for new client followup, awaits until state updates
             client_resp = await anext(client_state)                
 
             # if session termination token found in worker's last response, terminate
-            if "++9++" in worker_resp:
+            if "&&9&&" in worker_resp:
                 raise WebSocketDisconnect(f"Session (client id: {client_id}) termination token received from queue, so disconnecting associated async worker endpoint") 
 
             # if client disconnected, terminate

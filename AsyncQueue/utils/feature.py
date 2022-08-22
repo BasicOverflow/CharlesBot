@@ -109,8 +109,11 @@ async def tester(user_str: str, ws_handler: WebSocket, pee: str = "na na na nig"
         # print(f"Client response received: {client_response}")
         await ws_handler.send(f"Client response received: '{client_response}', input another inquery:")
         client_response2 = await ws_handler.recv()
-        await ws_handler.send(f"second response received: '{client_response2}', test feature completed ++9++")
-        # await ws_handler.close()
+        await ws_handler.send(f"second response received: '{client_response2}' sending somthing else again with no user input++")
+        _ = await ws_handler.recv()
+
+        await ws_handler.send(f"test feature completed &&9&&")
+
     except Exception as e:
         print(e)
 
