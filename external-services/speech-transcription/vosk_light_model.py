@@ -1,5 +1,6 @@
 from fastapi import WebSocket
 import yaml
+from pathlib import Path
 import asyncio
 import websockets
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosed
@@ -9,7 +10,15 @@ from vosk import Model, KaldiRecognizer
 
 # model_path = yaml.safe_load(open("../settings.yaml"))["asr_model_path"]
 model_path = r"C:\Users\peter\Desktop\CharlesBot\external-services\speech-transcription\models\vosk-model-small-en-us-0.15"
-model = Model(rf"{model_path}") #light
+# check if model path is present (like if repo has just been cloned). If not, create it
+Path(model_path).mkdir(parents=True, exist_ok=True)
+
+try:
+    model = Model(rf"{model_path}") #light
+except:
+    #TODO: download model into patg, try loading model again
+    pass
+
 recognizer = KaldiRecognizer(model, 16000)
 
 
