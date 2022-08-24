@@ -66,11 +66,10 @@ async def convo_text(websocket: WebSocket, client_name: str):
                         # first clear associated state with possibly any data from previous session
                         await websocket.app.state_manager.update_state(f"convo_phrases/{client_id}", "", is_queue=False)
                         await websocket.app.state_manager.update_state(f"async_worker_phrases/{client_id}", "", is_queue=False)
-                        # upon session creation, formal request body is prepared & shipped off to queue, establishing async worker
+                        # upon session creation, formal request body is prepared & shipped off to queue, establishing async worker endpoint connection
                         session = await websocket.app.command_manager.create_session(client_id, query)
                         if not session: raise Exception("duplicate command sessions detected")
                         await websocket.app.command_manager.connect_to_session(client_id, True)
-
 
                 # if no command sesion was started, ignore below logic and reset to new iteration
                 if not session: continue
@@ -90,8 +89,8 @@ async def convo_text(websocket: WebSocket, client_name: str):
 
                 # logic when phrase is from async worker
                 if "worker" in item.keys():
-                    # idk, the async woker logs the phrase, so idk if anything else needs to be done
-                    pass
+                    #log new response
+                    await session.log_worker_phrase(item["queue"])
 
 
     except (WebSocketDisconnect, ConnectionClosedError):

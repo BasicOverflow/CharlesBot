@@ -38,6 +38,7 @@ async def AsyncWorkerCommunications(websocket: WebSocket, client_id: str):
 
             # if token found indicating worker wanting to send multiple phrases in a row:
             if "++" in worker_resp:
+                # simulate client 'responding' to that worker phrase so that flow remains intact without client having to actually respond
                 await websocket.app.state_manager.update_state(f"convo_phrases/{client_id}", "___", is_queue=False)
 
             # Wait for new client followup, awaits until state updates
