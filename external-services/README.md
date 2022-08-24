@@ -1,0 +1,1 @@
+##TODO: outline the protocol of how each external service is supposed to receive & send data

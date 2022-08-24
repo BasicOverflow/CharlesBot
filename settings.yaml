@@ -1,0 +1,15 @@
+# host_ip: 'localhost'
+host_ip: '10.0.0.253'
+host_port: 8004
+video_storage_root_path: 'C:\Users\Peter\Desktop\video'
+audio_storage_root_path: 'C:\Users\Peter\Desktop\audio'
+asr_model_path: r'C:\Users\peter\Desktop\CharlesBot\external-services\speech-transcription\models\vosk-model-small-en-us-0.15'
+
+
+# current transcription model path
+# external ASR server port
+# external intent classifier port
+# intent_classifier_dir
+# yaml has functionality to run python code in .yaml files:
+  # use that to dynamically get the host ip
+# external speech transriber port
