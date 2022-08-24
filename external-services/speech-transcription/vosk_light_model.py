@@ -9,15 +9,34 @@ from vosk import Model, KaldiRecognizer
 
 
 # model_path = yaml.safe_load(open("../settings.yaml"))["asr_model_path"]
-model_path = r"C:\Users\peter\Desktop\CharlesBot\external-services\speech-transcription\models\vosk-model-small-en-us-0.15"
+model_path = r"C:\Users\peter\Desktop\CharlesBot\external-services\speech-transcription\models"
 # check if model path is present (like if repo has just been cloned). If not, create it
 Path(model_path).mkdir(parents=True, exist_ok=True)
 
 try:
-    model = Model(rf"{model_path}") #light
+    model = Model(rf"{model_path}\vosk-model-small-en-us-0.15") #light
 except:
-    #TODO: download model into patg, try loading model again
-    pass
+    # download model, try loading model again
+    print("No transcription model present, downloading...")
+
+    import urllib.request
+    urllib.request.urlretrieve("https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip", "vosk-model-small-en-us-0.15.zip")
+    
+    import zipfile
+    with zipfile.ZipFile("./vosk-model-small-en-us-0.15.zip", 'r') as zip_ref:
+        zip_ref.extractall(model_path)
+
+    from os import remove
+    remove("./vosk-model-small-en-us-0.15.zip")
+    
+    model = Model(rf"{model_path}\vosk-model-small-en-us-0.15") #light
+
+    print("Transcription model successfully instantiated...")
+
+    
+
+
+
 
 recognizer = KaldiRecognizer(model, 16000)
 
