@@ -61,8 +61,6 @@ def produce_augmentations(texts, use_clare=True) -> List[str]:
 
 # https://www.analyticsvidhya.com/blog/2022/02/text-data-augmentation-in-natural-language-processing-with-texattack/
 
-
-
 if __name__ == "__main__":
     import time
     start = time.time()

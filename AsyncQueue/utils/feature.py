@@ -1,12 +1,11 @@
-from genericpath import isfile
-from pathlib import Path
 import yaml
 import json
 import inspect
 import os
 from typing import Callable, List
-
 from fastapi import WebSocket
+
+from utils.data_augmentation import produce_augmentations
 
 #NOTE: FOR FEATURES THAT ACCEPT A WS CONNECTION:
     #The param in the function definition for the ws conn must be the last argument
@@ -44,11 +43,26 @@ class Feature(object):
         self.update_intents()
         #call method to update mappings.pickle
         self.update_mappings()
+        # call method to add augmented user examples if not already present
+        self.update_patterns(user_examples)
     
     async def run(self, *args, **kwargs) -> None:
         '''With the given arguments, executes the function as a coroutine'''
         await self.func(*args, **kwargs)
-    
+
+    def update_patterns(self, user_examples):
+        """Adds additional augmented user examples to intents object"""
+        # load content of file
+        intents = json.load(open(f"{root_dir}/intents.json","r"))
+
+        # grab user patterns, check to see if augmentations have been added
+        user_patterns = intents["patterns"]
+        if len(user_patterns) == len(user_examples): 
+            # if augmentations havent been added, add them
+            augmentations = produce_augmentations(user_examples)
+            intents["patterns"].extend(augmentations)
+            json.dump(intents, open(f"{root_dir}/intents.json","w",encoding="utf-8"), ensure_ascii=False, indent=2)
+
     def update_intents(self, file: str = f"{root_dir}/intents.json") -> None:
         '''Opens intents.json, sees if the current intent is already present in the file. If not, it adds it'''
         # ensure file exists
