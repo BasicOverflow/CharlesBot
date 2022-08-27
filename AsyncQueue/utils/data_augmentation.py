@@ -5,7 +5,7 @@ from textattack.augmentation import (
         EasyDataAugmenter,
         CLAREAugmenter,
         )
-import time
+from typing import List
 
 NUM_AUGS = 3
 
@@ -17,7 +17,8 @@ def worker(text, aug):
         )
     return L
 
-def produce_augmentations(texts, use_clare=True):
+def produce_augmentations(texts, use_clare=True) -> List[str]:
+    """Takes in list of phrases, spits out augmented verisons of each phrase in the list"""
     auged_text = []
     processes = []
 
@@ -63,9 +64,10 @@ def produce_augmentations(texts, use_clare=True):
 
 
 if __name__ == "__main__":
+    import time
     start = time.time()
 
-    produce_augmentations(
+    results = produce_augmentations(
         ["perform the test feature", "activate websocket tester", 
         "do the websocket client test", "do the websocket test feature", 
         "do the web socket client test"],
@@ -73,4 +75,5 @@ if __name__ == "__main__":
     )
 
     end = time.time()
+    print(results)
     print(f"Took {end-start} seconds")
