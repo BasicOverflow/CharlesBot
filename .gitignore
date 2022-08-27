@@ -13,6 +13,9 @@ __pycache__/
 *.h5
 *.pkl
 
+# neuralintents json config files
+api/dependencies/intent_classification/*.json
+
 # C extensions
 *.so
 
