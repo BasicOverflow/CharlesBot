@@ -1,5 +1,7 @@
 import json
+import os
 import asyncio
+from pathlib import Path
 from typing import Callable, Dict, Tuple
 from neuralintents import GenericAssistant
 
@@ -10,6 +12,22 @@ def decorator(tag: Dict) -> Callable:
             func(tag)   
         return wrapper
     return dec
+
+
+#Coroutine to monitor dataset and retrain
+async def monitor_dataset(classifier) -> None:
+    prev_dataset = classifier.query_dataset()
+    while True:
+        curr_dataset = classifier.query_dataset()
+
+        if curr_dataset != prev_dataset:
+            #retrain
+            print("Retraining intent classifier training set...")
+            classifier.retrain()
+            prev_dataset = curr_dataset
+
+        await asyncio.sleep(4)
+
 
 
 class FixedGenericAssistant(GenericAssistant):
@@ -49,6 +67,16 @@ class IntentClassifier(object):
 
         self.assistant = FixedGenericAssistant(f'{self.classifier_dir}/intents.json', self.mappings, model_name="Charles3.0")
 
+        # insure model directory exists
+        if os.path.isdir(r"./api/dependencies/intent_classification/model"):
+            pass
+        else:
+            # if not, train the model and save it there
+            print("Noticed missing intent classifier model, training/saving now...")
+            Path(rf"root\model").mkdir(parents=True, exist_ok=True)
+            self.assistant.train_model()
+            self.assistant.save_model()
+
 
     def retrain(self) -> None:
         self.mappings = json.load(open(f"{self.classifier_dir}/model/mappings.json", "r"))
@@ -58,7 +86,6 @@ class IntentClassifier(object):
             # print(val)
             # mappings[key] = lambda: update(val)
             self.mappings[key] = decorator(val)(self.update)
-
 
         self.assistant = FixedGenericAssistant(f'{self.classifier_dir}/intents.json', self.mappings, "Charles3.0")
         self.load()

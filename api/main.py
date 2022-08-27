@@ -11,8 +11,7 @@ from dependencies.ws_manager import ConnectionManager
 from dependencies.commandSessionManager import CommandSessionManager
 from dependencies.external_transcription_handler import BackgroundRunner
 from dependencies.state_manager import StateManager
-from dependencies.intent_classification.classifier import IntentClassifier
-from dependencies.intent_classification.server import monitor_dataset
+from dependencies.intent_classification.classifier import IntentClassifier, monitor_dataset
 
 from routers.client_video import router as client_video
 from routers.client_audio import router as client_audio 
