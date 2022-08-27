@@ -1,4 +1,5 @@
 import asyncio
+import os
 from typing import Callable, Dict
 import websockets
 import colorama
@@ -8,6 +9,7 @@ from colorama import Fore
 
 
 colorama.init(autoreset=True)
+root_dir = os.path.join( os.path.dirname(os.path.dirname(__file__)), "settings.yaml")
 
 
 class QueueTask(object):
@@ -28,7 +30,7 @@ class AsyncQueue(object):
         #Holds the actual function objects to be executed as cron jobs, these are constructed by incoming commands and reference Feature objects from self.features
         self.pending_tasks = []
 
-        settings = yaml.safe_load(open("../settings.yaml"))
+        settings = yaml.safe_load(open(root_dir))
         self.api = settings["host_ip"] + ":" + str(settings["host_port"])
         
 

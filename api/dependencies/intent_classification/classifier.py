@@ -29,7 +29,6 @@ async def monitor_dataset(classifier) -> None:
         await asyncio.sleep(4)
 
 
-
 class FixedGenericAssistant(GenericAssistant):
     '''Fixes bugs from neuralintents.GenericAssistant project'''
 
@@ -73,10 +72,9 @@ class IntentClassifier(object):
         else:
             # if not, train the model and save it there
             print("Noticed missing intent classifier model, training/saving now...")
-            Path(rf"root\model").mkdir(parents=True, exist_ok=True)
+            Path(r"\model").mkdir(parents=True, exist_ok=True)
             self.assistant.train_model()
             self.assistant.save_model()
-
 
     def retrain(self) -> None:
         self.mappings = json.load(open(f"{self.classifier_dir}/model/mappings.json", "r"))
@@ -89,25 +87,20 @@ class IntentClassifier(object):
 
         self.assistant = FixedGenericAssistant(f'{self.classifier_dir}/intents.json', self.mappings, "Charles3.0")
         self.load()
-
         self.assistant.train_model()
         self.assistant.save_model()
-
     
     def load(self) -> None:
         self.assistant.load_model()
 
-
     def update(self, tag: str) -> None:
         global current_intent
         self.current_intent = tag
-
     
     def query_dataset(self) -> Tuple[Dict, Dict]:
         self.mappings = json.load(open(f"{self.classifier_dir}/mappings.json", "r"))
         intents = json.load(open(f"{self.classifier_dir}/intents.json", "r"))
         return (self.mappings, intents)
-
     
     def _query_intent(self, msg: str) -> Tuple[str, str]:
         '''Edits current global variable to whatever intent the message entered wants, returns the message'''

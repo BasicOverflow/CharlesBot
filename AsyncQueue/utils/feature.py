@@ -1,4 +1,5 @@
-from urllib import response
+from genericpath import isfile
+from pathlib import Path
 import yaml
 import json
 import inspect
@@ -43,22 +44,22 @@ class Feature(object):
         self.update_intents()
         #call method to update mappings.pickle
         self.update_mappings()
-        #determine if function wants a ws_handler
-        self.inquire = False
-        #look through func_params to determine this
-        for arg in self.func_params:
-            if "ws" in arg or "handler" in arg:
-                self.inquire = True
-
     
     async def run(self, *args, **kwargs) -> None:
         '''With the given arguments, executes the function as a coroutine'''
         await self.func(*args, **kwargs)
-
     
     def update_intents(self, file: str = f"{root_dir}/intents.json") -> None:
         '''Opens intents.json, sees if the current intent is already present in the file. If not, it adds it'''
+        # ensure file exists
+        if not os.path.isfile(os.path.join(root_dir, "intents.json")):
+            x = open(file, "w")
+            x.write('''{"intents": []}''')
+            x.close()
+
+        # load content of file
         intents = json.load(open(file,"r"))
+
         #check if the tag is brand new
         tag_names = [i["tag"] for i in intents["intents"]]
         if self.intents["tag"] in tag_names:
@@ -67,6 +68,7 @@ class Feature(object):
             intents["intents"].append(self.intents)
             #Write changes to file
             json.dump(intents, open(file,"w",encoding="utf-8"), ensure_ascii=False, indent=2)
+        
         #if not, loop through intents and see if an intent has been modified
         for n,tag in enumerate(intents["intents"]):
             if tag["tag"] == self.intents["tag"]: #Find if there is the same existing tag
@@ -79,14 +81,21 @@ class Feature(object):
                     #Write changes to file
                     json.dump(intents, open(file,"w",encoding="utf-8"), ensure_ascii=False, indent=2)
     
-
     def update_mappings(self, file: str = f"{root_dir}/mappings.json") -> None:
         '''the mappings json object passed into the intent classifier is serialized into a file so it can be update by a new featire here'''
         #reconstruct mappings and check to see if the current feature's mapping is already there
+        
+        # ensure file exists
+        if not os.path.isfile(os.path.join(root_dir, "mappings.json")):
+            x = open(file, "w")
+            x.write("{}")
+            x.close()
+
         #read mappings
         with open(file, 'r') as handle:
             mappings = json.load(handle)
             handle.close()
+
         #if the key is already present in the dict
         if self.intents["tag"] in mappings.keys():
             pass
