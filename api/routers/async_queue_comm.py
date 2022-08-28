@@ -6,7 +6,7 @@ router = APIRouter()
 
 @router.websocket("/ws/queue")
 async def AsyncQueueCommunications(websocket: WebSocket):
-    '''Sends commands to queue once they are ready to be shipped by the other endpoints'''
+    """Sends commands to queue once they are ready to be shipped by the other endpoints"""
     try:
         # ensure no duplicate websocket connection from queue is present, if so, remove it
         for ws in websocket.app.manager.active_connections:

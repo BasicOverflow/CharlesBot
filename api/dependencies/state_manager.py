@@ -9,21 +9,18 @@ from pydantic import BaseModel
 # asyncio queue functionality:
 # https://gist.github.com/showa-yojyo/4ed200d4c41f496a45a7af2612912df3
 
-#TODO: as of now, functionality for write events has been moved, if after testing its still needed, implement it again
-
-
 class State(BaseModel):
     state_path: str
     is_queue: bool
 
 
 class StateManager(object):
-    '''Manages all state across api endpoints/services and provides async interface for event handling upon state updates & more.
+    """Manages all state across api endpoints/services and provides async interface for event handling upon state updates & more.
     Handles two types of state:
         1.) Single value state: state holds one value at all times that gets updated
         2.) Queued state: state is a queue that takes on multiple "frames" of state to get consumed. (producer-consumer)
         
-    Type of state specified by the is_queue kwarg within various methods'''
+    Type of state specified by the is_queue kwarg within various methods"""
 
     def __init__(self) -> None:
         # nested dict that holds all routes to state & state itself

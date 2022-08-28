@@ -19,9 +19,8 @@ class QueueTask(object):
         self.kwargs = kwargs
 
 
-
 class AsyncQueue(object):
-    '''Asynchronous Queue that receives tasks to complete, executes them as coroutines, and communicates results back to the original client who inquired'''
+    """Asynchronous Queue that receives tasks to complete, executes them as coroutines, and communicates results back to the original client who inquired"""
    
     def __init__(self) -> None:
         #Holds all features added to queue (these would be dummy tasks in older versions of charles)
@@ -32,11 +31,10 @@ class AsyncQueue(object):
 
         settings = yaml.safe_load(open(root_dir))
         self.api = settings["host_ip"] + ":" + str(settings["host_port"])
-        
 
     def init_async_loop(self) -> None:
-        '''This is where everything gets initiated. All asynchronous event loops are triggered/reset here and all coroutines are added here. Additonally all async arrays/vars are defined here.
-        This needs to be called to start up everything else.'''
+        """This is where everything gets initiated. All asynchronous event loops are triggered/reset here and all coroutines are added here. Additonally all async arrays/vars are defined here.
+        This needs to be called to start up everything else."""
 
         self.coroutines = [] #This is where new coroutines can be added/removed. Any async tasks located here will be loaded into the event loop upon initialization/reset
         self.loop = asyncio.get_event_loop() #Pull current event loop
@@ -46,7 +44,6 @@ class AsyncQueue(object):
         self.coroutines.append(self.loop.create_task(self.ws_api_client(f"ws://{self.api}/ws/queue")))
 
         print(f"{Fore.GREEN}Async Loop Started")
-
         #Init a loop that starts the async event loop until a reset event is triggered. This reset event stops the loop and allows a new one with additional coroutines to be started
         while True:
             self.coroutines = [] #Redefine coroutines array (its necessary bc a bunch of async task objects with no running loops will cause problems)
@@ -67,26 +64,22 @@ class AsyncQueue(object):
             for coro in self.coroutines:
                 coro.cancel()
 
-
     async def monitor_loop_reset(self) -> None:
-        '''This method actually triggers the reset of the asyncio event loop by calling loop.stop() upon 
-        monitoring an external source. In this case, the external source is the continuous referencing of an attribute to this class'''
+        """This method actually triggers the reset of the asyncio event loop by calling loop.stop() upon 
+        monitoring an external source. In this case, the external source is the continuous referencing of an attribute to this class"""
         while True:
             if self.event_trigger: #If true, then a reset event will be triggered here and the event loop will reset.
                 
                 self.event_trigger = False #reset variable
                 self.loop.stop() #Stop the current event loop, which will cause a new one to be defined within self.init_async_loop
-                
                 print(f"{Fore.GREEN}Reset triggered")
 
             #Check every quarter second
             await asyncio.sleep(0.25)
-    
 
     async def _ws_api_client(self, uri: str) -> None:
-        '''Keeps ws connection with API and communicates or command updates to queue.'''
+        """Keeps ws connection with API and communicates or command updates to queue."""
         async with websockets.connect(uri) as ws:
-
             print(f"{Fore.GREEN}Queue Successfully Connected with API")
 
             while True:
@@ -113,18 +106,16 @@ class AsyncQueue(object):
                 #Reset loop to insert the coroutine into the async event loop
                 self.trigger_loop_reset()
 
-    
     async def ws_api_client(self, uri: str) -> None:
-        '''A wrapper for the above method'''
+        """A wrapper for the above method"""
         while True:
             try:
                 await self._ws_api_client(uri)
             except Exception as e:
                 print(f"{Fore.RED}Queue unable to connect with API: {Fore.WHITE}{e}. Trying again...")
 
-
     def ws_duplex_comm_client(self, client_url: str) -> None:
-        '''Decorator that wraps a ws client around a given function to communicate results/further inqueries to api'''
+        """Decorator that wraps a ws client around a given function to communicate results/further inqueries to api"""
         print(f"Creating ws: {client_url}")
 
         def ws_decorator(func):
@@ -138,10 +129,9 @@ class AsyncQueue(object):
 
             return ws_wrapper
         return ws_decorator
-        
 
     def add_task(self ,command: Dict, feature_object) -> None:
-        '''Takes the task to be constructed from the command and wraps it in a ws client before inserting it into event loop'''
+        """Takes the task to be constructed from the command and wraps it in a ws client before inserting it into event loop"""
         client_id = command["client_id"]
         client_url = f"ws://{self.api}/ws/queue_worker/{client_id}"
 
@@ -157,7 +147,6 @@ class AsyncQueue(object):
             command["args"] = []
 
         print(f"{Fore.GREEN}Feature match was found for this command: {Fore.WHITE}{command}")
-
         self.pending_tasks.append(
             QueueTask(
                 (self.ws_duplex_comm_client(client_url))(feature_object.run),
@@ -166,11 +155,9 @@ class AsyncQueue(object):
                 )
             )
 
-
     def trigger_loop_reset(self) -> None:
-        '''Makes the change to self.event_trigger'''
+        """Makes the change to self.event_trigger"""
         self.event_trigger = True
-
 
     def add_feature(self, feaure_obj) -> None:
         self.features.append(feaure_obj)

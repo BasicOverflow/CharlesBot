@@ -9,7 +9,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from dependencies.ws_manager import ConnectionManager
 from dependencies.commandSessionManager import CommandSessionManager
-from dependencies.external_transcription_handler import BackgroundRunner
+from dependencies.external_transcription_handler import AudioTranscriptionHandler
 from dependencies.state_manager import StateManager
 from dependencies.intent_classification.classifier import IntentClassifier, monitor_dataset
 
@@ -38,7 +38,7 @@ app.manager = ConnectionManager()
 app.state.pending_commands = []
 app.command_manager = CommandSessionManager(app.state.pending_commands)
 # start background runner for monitoring external transcription service
-runner = BackgroundRunner()
+runner = AudioTranscriptionHandler()
 # Bind instance of StateManager 
 app.state_manager = StateManager()
 #intenet classifier
@@ -63,7 +63,6 @@ async def root():
     '''In production, returns name of client? Or some static web page w/ details, instructions, current connected client stats, etc'''
     return "Poop, stank even"
 
-
 @app.get("/debug", response_class=HTMLResponse)
 async def debug():
     '''Debugging purposes'''
@@ -77,19 +76,16 @@ async def debug():
     </body>
     '''
 
-
 @app.on_event("startup")
 async def init_intent_classifier():
     """Loads model for intent classifier, activates corountine to monitor changes/retraining of dataset"""
     asyncio.create_task(monitor_dataset(app.intent_classifier))
     await asyncio.to_thread(app.intent_classifier.load)
 
-
 @app.on_event("startup")
 async def init_state_manager():
     """Initializes state manager, which operates on seperate threads (one thread per new piece of state"""
     app.state_manager.init_manager()
-
 
 @app.on_event("startup")
 async def init_external_transcription_handler():
@@ -97,7 +93,6 @@ async def init_external_transcription_handler():
     asyncio.create_task(
         runner.monitor_new_connections(app)
     )
-
 
 @app.on_event("startup")
 async def startup_db_client():
@@ -107,11 +102,9 @@ async def startup_db_client():
     app.mongo_collection = app.mongodb["CommandSessions"]
     app.command_manager.obtain_db_cursor(app.mongo_collection)
 
-
 @app.on_event("shutdown")
 async def shutdown_db_client():
     app.mongo_client.close()
-
 
 @app.on_event("shutdown")
 async def shutdown_state_manager():

@@ -7,14 +7,12 @@ class ClientDisconnectError(Exception):
     pass
 
 
-class BackgroundRunner(object): #TODO: give a more precise name to this class
+class AudioTranscriptionHandler(object): 
 
     async def monitor_new_connections(self, app: any) -> None:
         '''Monitors app state and looks for newly connected audio clients, upon new client, dispactches coroutine to connect to external transcription service'''
-
         #hold array of all the client_id's that have been assigned transcription service
         processed_clients = []
-
         # constantly check for new/removed clients
         while True:
             # access all current clients
@@ -33,11 +31,9 @@ class BackgroundRunner(object): #TODO: give a more precise name to this class
 
             await asyncio.sleep(0.1)
 
-
     async def ws_transcription_client(self, url: str, client_id: str, app: any) -> None:
         '''New instance is created for each audio client connection, looks at & updates app state, communicates frames with external server. Receives trascribed text and updates app() state'''
         print(f"ws transcription client created for {client_id}")
-
         # create peice of state for client
         state_path = f"convo_phrases/{client_id}"
         app.state_manager.create_new_state(state_path, is_queue=False)

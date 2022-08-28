@@ -35,7 +35,7 @@ class FixedGenericAssistant(GenericAssistant):
     def __init__(self, intents: Dict, intent_methods: Dict ={}, model_name: str = "assistant_model") -> None:
         super().__init__(intents, intent_methods, model_name=model_name)
 
-        self.root = r"C:\Users\Peter\Desktop\CharlesBot\api\dependencies\intent_classification"
+        self.root = os.path.dirname(__file__)
         self.model_name = rf"{self.root}\model\{model_name}"
 
     def request(self, message: str) -> None:
@@ -49,27 +49,20 @@ class FixedGenericAssistant(GenericAssistant):
 
 
 class IntentClassifier(object):
-    ''''''
+    """Responsible for classifying user inqueries into desired intent"""
     def __init__(self) -> None:
         self.current_intent = None
     
-        self.classifier_dir = r"C:\Users\Peter\Desktop\CharlesBot\api\dependencies\intent_classification"
-        # print(classifier_dir)
-
+        self.classifier_dir = os.path.dirname(__file__)
         self.mappings = json.load(open(rf"{self.classifier_dir}\mappings.json", "r"))
-
         for key in self.mappings.keys():
             val = self.mappings[key]
-            # print(val)
-            # mappings[key] = lambda: update(val)
             self.mappings[key] = decorator(val)(self.update)
 
         self.assistant = FixedGenericAssistant(f'{self.classifier_dir}/intents.json', self.mappings, model_name="Charles3.0")
 
         # insure model directory exists
-        if os.path.isdir(r"./api/dependencies/intent_classification/model"):
-            pass
-        else:
+        if not os.path.isdir(r"./api/dependencies/intent_classification/model"):
             # if not, train the model and save it there
             print("Noticed missing intent classifier model, training/saving now...")
             Path(r"\model").mkdir(parents=True, exist_ok=True)
@@ -81,8 +74,6 @@ class IntentClassifier(object):
 
         for key in self.mappings.keys():
             val = self.mappings[key]
-            # print(val)
-            # mappings[key] = lambda: update(val)
             self.mappings[key] = decorator(val)(self.update)
 
         self.assistant = FixedGenericAssistant(f'{self.classifier_dir}/intents.json', self.mappings, "Charles3.0")
@@ -124,6 +115,8 @@ if __name__ == "__main__":
     print(testModel._query_intent("archive the last 5 hours of audio"))
     print(testModel._query_intent("perform test websocket connection with client"))
     print(testModel._query_intent("perform system diagnostics"))
+
+
 
 
 

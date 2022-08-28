@@ -1,18 +1,16 @@
 import asyncio
-from aiostream import stream #allows for joining multiple async generators
+from aiostream import stream # allows for joining multiple async generators
 from fastapi import APIRouter, WebSocket
 from websockets.exceptions import ConnectionClosedError
 from starlette.websockets import WebSocketDisconnect
- # https://stackoverflow.com/questions/68231936/python-fastapi-how-can-i-get-headers-or-a-specific-header-from-my-backend-api
-
 
 router = APIRouter()
 
 
 @router.websocket("/ws/conversational_text/{client_name}")
 async def convo_text(websocket: WebSocket, client_name: str):
-    '''Receives inqueries from client, updates app() state, then waits for new response from async worker by looking at other app() state. Sends all comunication back to client device and 
-    Manages command sessions. '''
+    """Receives inqueries from client, updates app() state, then waits for new response from async worker by looking at other app() state. Sends all comunication back to client device and 
+    Manages command sessions."""
     await websocket.app.manager.connect(websocket)
 
     # create identifier for client's audio endpoint, not this endpoint (hence the port+1, since port number assigned always (i think) will be 1 more than previous port assigned)
@@ -30,7 +28,6 @@ async def convo_text(websocket: WebSocket, client_name: str):
             yield {"worker": phrase}
 
     try:
-
         # add logic to wait for other endpoint/external services to be established, but not forever
         print("Conversational_text endpoint waiting for external transcription to be established...")
         while f"client_audio_frames/{client_id}" not in websocket.app.state_manager.all_states() and f"convo_phrases/{client_id}" not in websocket.app.state_manager.all_states():
@@ -47,7 +44,7 @@ async def convo_text(websocket: WebSocket, client_name: str):
                 # send each message directly to client (one way)
                 await websocket.send_json(item)
 
-                ### COMMAND SESSION LOGIC BEGINS ###
+                ### COMMAND SESSION LOGIC ###
 
                 # upon receiving client phrase, check if in a command session 
                 # also check if current session has been deactivated, if so, reset to next iteration to try and start new session
@@ -113,7 +110,7 @@ async def convo_text(websocket: WebSocket, client_name: str):
 
 @router.websocket("/ws/conversational_text_browser/{client_name}")
 async def convo_text_browser(websocket: WebSocket, client_name: str):
-    '''Receives inqueries from client, updates app() state, then waits for new response from async worker by looking at other app() state. Designed for browser-clients'''
+    """Receives inqueries from client, updates app() state, then waits for new response from async worker by looking at other app() state. Designed for browser-clients"""
     await websocket.app.manager.connect(websocket)
    
     # create identifier
@@ -181,23 +178,6 @@ async def convo_text_browser(websocket: WebSocket, client_name: str):
         websocket.app.command_manager.deactivate_session(client_id)
         websocket.app.manager.disconnect(websocket)
         print(f"Conversational text endpoint for client {client_id} disconnected")
-
-
-
-
-
-
-
-
-
-
-
-#TODO: later on, add logic to handle the end of a command session and restart
-    # this involves disconnecting the current command session object, restarting logic from the top, 
-    # and starting a brand new session object
-    # we will also need to disconnect the associate async worker for every session and have a new one join
-
-
 
 
 

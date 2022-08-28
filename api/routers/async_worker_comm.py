@@ -1,18 +1,23 @@
 from fastapi import APIRouter, WebSocket
 from starlette.websockets import WebSocketDisconnect
 from websockets import exceptions
+import yaml
+import os
 
 
-#NOTE: for logic with ++, maybe when async worker endpoint receives phrase from queue with ++, it can manipulate the clients state to simulate the client saying something, which
-# will allow for multiple messages in a row one way 
+root_dir = os.path.join( os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "settings.yaml")
+TERMINATION_TOKEN = yaml.safe_load(open(root_dir))["session_termination_token"]
+REPETITION_TOKEN = yaml.safe_load(open(root_dir))["immediate_repetion_token"]
 
 
 router = APIRouter()
 
-
 @router.websocket("/ws/queue_worker/{client_id}")
 async def AsyncWorkerCommunications(websocket: WebSocket, client_id: str):
-    '''Interacts with the Async Queue workers who send results from client inqueries. Receives results from queue, updates app() state, looks at other app() state for client response, and sends it back to queue'''
+    """Interacts with the Async Queue workers who send results from client inqueries. 
+    Receives results from queue, updates app() state, looks at other app() state for 
+    client response, and sends it back to queue"""
+
     await websocket.app.manager.connect(websocket)
 
     # init app() state for this async worker
@@ -37,7 +42,7 @@ async def AsyncWorkerCommunications(websocket: WebSocket, client_id: str):
             await websocket.app.state_manager.update_state(state_path, worker_resp, is_queue=False)
 
             # if token found indicating worker wanting to send multiple phrases in a row:
-            if "++" in worker_resp:
+            if REPETITION_TOKEN in worker_resp:
                 # simulate client 'responding' to that worker phrase so that flow remains intact without client having to actually respond
                 await websocket.app.state_manager.update_state(f"convo_phrases/{client_id}", "___", is_queue=False)
 
@@ -45,7 +50,7 @@ async def AsyncWorkerCommunications(websocket: WebSocket, client_id: str):
             client_resp = await anext(client_state)                
 
             # if session termination token found in worker's last response, terminate
-            if "&&9&&" in worker_resp:
+            if TERMINATION_TOKEN in worker_resp:
                 raise WebSocketDisconnect(f"Session (client id: {client_id}) termination token received from queue, so disconnecting associated async worker endpoint") 
 
             # if client disconnected, terminate

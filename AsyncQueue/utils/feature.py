@@ -21,12 +21,10 @@ root_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__
 
 
 class Feature(object):
-    '''A way to add a new peice of functionality to the AsyncQueue in an elegant/seamless way as possible.
+    '''A way to add a new peice of functionality to the AsyncQueue in a seamless way as possible.
     Info held: 
         # Intent info to add to classifier's intent.json (check to see if the intent has already been added, if so, dont write to the file)
-        # Any inqueries to follow up with client (list of strings) #TODO: <- not needed anymore
-        # the function itself
-        # the function's name'''
+        # the coroutine itself'''
         
     def __init__(self, func: Callable, tag: str, user_examples: List[str]) -> None:
         self.func = func
@@ -59,8 +57,11 @@ class Feature(object):
         user_patterns = intents["patterns"]
         if len(user_patterns) == len(user_examples): 
             # if augmentations havent been added, add them
-            augmentations = produce_augmentations(user_examples)
+            augmentations = produce_augmentations(user_examples, use_clare=False)
             intents["patterns"].extend(augmentations)
+            # ensure no duplicates
+            intents["patterns"] = list(set(intents["patterns"]))
+            # write to file
             json.dump(intents, open(f"{root_dir}/intents.json","w",encoding="utf-8"), ensure_ascii=False, indent=2)
 
     def update_intents(self, file: str = f"{root_dir}/intents.json") -> None:
@@ -87,9 +88,7 @@ class Feature(object):
         for n,tag in enumerate(intents["intents"]):
             if tag["tag"] == self.intents["tag"]: #Find if there is the same existing tag
                 #check if its identical with self.intents. If not, update it
-                if tag == self.intents:
-                    pass
-                else:
+                if tag != self.intents:
                     # print(tag)
                     intents["intents"][n] = self.intents
                     #Write changes to file
@@ -111,9 +110,7 @@ class Feature(object):
             handle.close()
 
         #if the key is already present in the dict
-        if self.intents["tag"] in mappings.keys():
-            pass
-        else: #if not, continue        
+        if self.intents["tag"] not in mappings.keys():
             #update mappings dict with new key/value
             mappings[self.intents["tag"]] = self.func_name
             #write serialized mappings to file
@@ -129,12 +126,13 @@ async def tester(user_str: str, ws_handler: WebSocket, pee: str = "na na na nig"
     try: 
         await ws_handler.send(f"Queue is active, initial user inquery was: '{user_str}', provide further input:")
         client_response = await ws_handler.recv()
+
         # print(f"Client response received: {client_response}")
         await ws_handler.send(f"Client response received: '{client_response}', input another inquery:")
         client_response2 = await ws_handler.recv()
+        
         await ws_handler.send(f"second response received: '{client_response2}' sending somthing else again with no user input++")
         _ = await ws_handler.recv()
-
         await ws_handler.send(f"test feature completed &&9&&")
 
     except Exception as e:

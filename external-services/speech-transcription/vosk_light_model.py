@@ -1,15 +1,16 @@
+import os
 from fastapi import WebSocket
 import yaml
 from pathlib import Path
 import asyncio
 import websockets
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosed
+
 # ASR dependencies
 from vosk import Model, KaldiRecognizer
 
 
-# model_path = yaml.safe_load(open("../settings.yaml"))["asr_model_path"]
-model_path = r"C:\Users\peter\Desktop\CharlesBot\external-services\speech-transcription\models"
+model_path = os.path.join( os.path.dirname(__file__), "models")
 # check if model path is present (like if repo has just been cloned). If not, create it
 Path(model_path).mkdir(parents=True, exist_ok=True)
 
@@ -32,10 +33,6 @@ except:
     model = Model(rf"{model_path}\vosk-model-small-en-us-0.15") #light
 
     print("Transcription model successfully instantiated...")
-
-    
-
-
 
 
 recognizer = KaldiRecognizer(model, 16000)
@@ -68,8 +65,9 @@ async def serve(websocket: WebSocket, path: str) -> None:
 
 
 async def main() -> None:
-    # 10.0.0.253
-    async with websockets.serve(serve, "localhost", 8005):
+    root_dir = os.path.join( os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "settings.yaml")
+    port = yaml.safe_load(open(root_dir))["external_speech_transcription_server_port"]
+    async with websockets.serve(serve, "localhost", port):
         await asyncio.Future() # run forever
 
 

@@ -19,7 +19,7 @@ audio_file_path = settings["audio_storage_root_path"] #Directory to store audio 
 
 
 def open_wav(path):
-    '''Returns file write object'''
+    """Returns file write object"""
     curr_dir = wave.open(path, "wb") 
     curr_dir.setnchannels(1) # mono
     curr_dir.setsampwidth(2)
@@ -29,9 +29,7 @@ def open_wav(path):
 
 @router.websocket("/ws/audio/{client_name}")
 async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
-    '''Recives raw RAW audio frames from client, stores them in hour long segments and places them in app() state for other endpoints/services to access.'''
-    #TODO: have client send audio details in request body to dynamically take care of any audio channel/rate/etc, NOTE: actually, all audio needs to have same settings for transcription model
-
+    """Recives raw RAW audio frames from client, stores them in hour long segments and places them in app() state for other endpoints/services to access."""
     # create identifier
     client_id = f"{client_name}-{websocket.client.host}:{str(websocket.client.port)}"
     state_path = f"client_audio_frames/{client_id}"

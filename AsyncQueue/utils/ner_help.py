@@ -13,11 +13,10 @@ except:
 
 
 class NamedEntityExtractor(object):
-    '''API built on top of scapy to assist in pulling useful information from client inqueries within a Feature's coroutine'''
+    """API built on top of scapy to assist in pulling useful information from client inqueries within a Feature's coroutine"""
 
     def __init__(self) -> None:
         self.model = NER
-
     
     def __call__(self, inp_phrase: str) -> None:
         # make inference, set class attributes to people, places, etc
@@ -54,32 +53,24 @@ class NamedEntityExtractor(object):
 
     def extract_persons(self) -> List[str]: return self.persons
 
-
     def extract_places(self) -> List[str]: return self.places
-
 
     def extract_dates(self) -> List[str]: return self.dates
 
-
     def extract_cardinal_numbers(self) -> List[str]: return self.cardinal_numbers
-
 
     def extract_ordinal_numbers(self) -> List[str]: return self.ordinal_numbers
 
-
     def extract_organizations(self) -> List[str]: return self.organizations
-
 
     def extract_products(self) -> List[str]: return self.products
 
-
     def extract_remaining_misc(self) -> List[Tuple]: 
-        '''Return any remaining entities and their labels'''
+        """Return any remaining entities and their labels"""
         return self.misc
 
-
     def explain_label(self, label: str) -> str:
-        '''Provides description of a label from spacy'''
+        """Provides description of a label from spacy"""
         return spacy.explain(label)
 
 
