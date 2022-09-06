@@ -18,7 +18,8 @@ def worker(text, aug):
     return L
 
 def produce_augmentations(texts, use_clare=True) -> List[str]:
-    """Takes in list of phrases, spits out augmented verisons of each phrase in the list"""
+    """Takes in list of phrases, spits out augmented verisons of each phrase in the list. 
+        Use Clare utilizes best performing model to produce augmentations but takes a lot longer."""
     auged_text = []
     processes = []
 
