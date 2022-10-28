@@ -49,13 +49,15 @@ class Feature(object):
         await self.func(*args, **kwargs)
 
     def update_patterns(self, user_examples):
-        """Adds additional augmented user examples to intents object"""
+        """Adds additional augmented user examples to intents objects"""
         # load content of file
         intents = json.load(open(f"{root_dir}/intents.json","r"))
 
         # grab user patterns, check to see if augmentations have been added
         user_patterns = intents["patterns"]
         if len(user_patterns) == len(user_examples): 
+            tag = intents["tag"]
+            print(f"No augmented data present for intent: {tag}, adding to dataset now... (might take several minutes)")
             # if augmentations havent been added, add them
             augmentations = produce_augmentations(user_examples, use_clare=False)
             intents["patterns"].extend(augmentations)

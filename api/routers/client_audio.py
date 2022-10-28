@@ -39,8 +39,8 @@ async def ws_audio_endpoint(websocket: WebSocket, client_name: str):
         for state_path in websocket.app.state_manager.all_states():
             if str(websocket.client.host) in state_path and "client_audio_frames" in state_path:
                 websocket.app.manager.disconnect(websocket)
-                print(f"Duplicate client_audio Connection ({client_id}) found on same client, rejecting") # reject the connection 
-                raise WebSocketDisconnect
+                print(f"Duplicate client_audio Connection ({client_id}) found on same client, rejecting") 
+                raise WebSocketDisconnect # reject the connection 
     except Exception as e:
         print(e)
         return

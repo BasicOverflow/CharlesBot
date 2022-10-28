@@ -62,7 +62,7 @@ async def AsyncWorkerCommunications(websocket: WebSocket, client_id: str):
 
             
     except (WebSocketDisconnect, exceptions.ConnectionClosedError) as e:
-        print(f"Async worker: {e}")
+        print(f"Async worker error: {e}")
         # websocket.app.state_manager.destroy_state(state_path) # destroy associated app() state
         await websocket.app.command_manager.deactivate_session(client_id) # deactivate command session
         websocket.app.manager.disconnect(websocket)

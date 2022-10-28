@@ -7,7 +7,9 @@ from textattack.augmentation import (
         )
 from typing import List
 
+
 NUM_AUGS = 3
+
 
 def worker(text, aug):
     L = []
@@ -17,8 +19,10 @@ def worker(text, aug):
         )
     return L
 
+
 def produce_augmentations(texts, use_clare=True) -> List[str]:
-    """Takes in list of phrases, spits out augmented verisons of each phrase in the list"""
+    """Takes in list of phrases, spits out augmented verisons of each phrase in the list. 
+    Might take several minutes, takes even more time when use_clare=True, however will make intent classifier more accurate"""
     auged_text = []
     processes = []
 
