@@ -5,7 +5,6 @@ import os
 from typing import Callable, List
 from fastapi import WebSocket
 
-from utils.data_augmentation import produce_augmentations
 
 #NOTE: FOR FEATURES THAT ACCEPT A WS CONNECTION:
     #The param in the function definition for the ws conn must be the last argument
@@ -26,97 +25,50 @@ class Feature(object):
         # Intent info to add to classifier's intent.json (check to see if the intent has already been added, if so, dont write to the file)
         # the coroutine itself'''
         
-    def __init__(self, func: Callable, tag: str, user_examples: List[str]) -> None:
+    def __init__(self, func: Callable, user_examples: List[str]) -> None:
         self.func = func
         # print(inspect.getfullargspec(func))
         self.func_params = inspect.getfullargspec(func)[0]
-        self.intents = {
-            "tag": tag,
-            "patterns": user_examples,
-            "responses": "",
-            "context_set": ""
-        }
-        self.func_name = func.__name__
+        tag = func.__name__
         #call method to update intent.json in constructor
-        self.update_intents()
-        #call method to update mappings.pickle
-        self.update_mappings()
-        # call method to add augmented user examples if not already present
-        self.update_patterns(user_examples)
+        self.update_intents(tag, user_examples)
     
     async def run(self, *args, **kwargs) -> None:
         '''With the given arguments, executes the function as a coroutine'''
         await self.func(*args, **kwargs)
 
-    def update_patterns(self, user_examples):
-        """Adds additional augmented user examples to intents object"""
-        # load content of file
-        intents = json.load(open(f"{root_dir}/intents.json","r"))
-
-        # grab user patterns, check to see if augmentations have been added
-        user_patterns = intents["patterns"]
-        if len(user_patterns) == len(user_examples): 
-            # if augmentations havent been added, add them
-            augmentations = produce_augmentations(user_examples, use_clare=False)
-            intents["patterns"].extend(augmentations)
-            # ensure no duplicates
-            intents["patterns"] = list(set(intents["patterns"]))
-            # write to file
-            json.dump(intents, open(f"{root_dir}/intents.json","w",encoding="utf-8"), ensure_ascii=False, indent=2)
-
-    def update_intents(self, file: str = f"{root_dir}/intents.json") -> None:
+    def update_intents(self, tag, query_examples: List[str], file: str = f"{root_dir}\\data\\intents_data.json") -> None:
         '''Opens intents.json, sees if the current intent is already present in the file. If not, it adds it'''
+        file = file.replace("\\","/")
+        
         # ensure file exists
-        if not os.path.isfile(os.path.join(root_dir, "intents.json")):
-            x = open(file, "w")
-            x.write('''{"intents": []}''')
-            x.close()
+        if not os.path.isfile(file):
+            open(file, "w").close()
 
         # load content of file
         intents = json.load(open(file,"r"))
+        print(intents)
 
         #check if the tag is brand new
-        tag_names = [i["tag"] for i in intents["intents"]]
-        if self.intents["tag"] in tag_names:
-            pass
-        else: #append it to intents
-            intents["intents"].append(self.intents)
-            #Write changes to file
-            json.dump(intents, open(file,"w",encoding="utf-8"), ensure_ascii=False, indent=2)
+        tags = intents.keys()
+        if tag in tags:
+            #if not, loop through intents and see if queries has been modified
+            stored_query_examples = intents[tag]
+
+            if sorted(stored_query_examples) != sorted(query_examples):
+                intents[tag] = query_examples
+        else: 
+            # if so, append it to intents
+            intents[tag] = query_examples
+            
+        #Write changes to file
+        json.dump(intents, open(file,"w",encoding="utf-8"), ensure_ascii=False, indent=2)
+
         
-        #if not, loop through intents and see if an intent has been modified
-        for n,tag in enumerate(intents["intents"]):
-            if tag["tag"] == self.intents["tag"]: #Find if there is the same existing tag
-                #check if its identical with self.intents. If not, update it
-                if tag != self.intents:
-                    # print(tag)
-                    intents["intents"][n] = self.intents
-                    #Write changes to file
-                    json.dump(intents, open(file,"w",encoding="utf-8"), ensure_ascii=False, indent=2)
+        
+                    
     
-    def update_mappings(self, file: str = f"{root_dir}/mappings.json") -> None:
-        '''the mappings json object passed into the intent classifier is serialized into a file so it can be update by a new featire here'''
-        #reconstruct mappings and check to see if the current feature's mapping is already there
-        
-        # ensure file exists
-        if not os.path.isfile(os.path.join(root_dir, "mappings.json")):
-            x = open(file, "w")
-            x.write("{}")
-            x.close()
 
-        #read mappings
-        with open(file, 'r') as handle:
-            mappings = json.load(handle)
-            handle.close()
-
-        #if the key is already present in the dict
-        if self.intents["tag"] not in mappings.keys():
-            #update mappings dict with new key/value
-            mappings[self.intents["tag"]] = self.func_name
-            #write serialized mappings to file
-            with open(file, 'w') as handle:
-                json.dump(mappings, handle)
-                handle.close()
 
 
 
@@ -139,7 +91,6 @@ async def tester(user_str: str, ws_handler: WebSocket, pee: str = "na na na nig"
         print(e)
 
 test = Feature(tester, 
-    "test ws",
     ["perform the test feature", "activate websocket tester", "do the websocket client test", "do the websocket test feature", "do the web socket client test"]  
 )
 

@@ -1,0 +1,17 @@
+{
+  "tag1": [
+    "ex_query1",
+    "ex_query2"
+  ],
+  "tag2": [
+    "ex_query3",
+    "ex_query4"
+  ],
+  "tester": [
+    "perform the test feature",
+    "activate websocket tester",
+    "do the websocket client test",
+    "do the websocket test feature",
+    "do the web socket client test"
+  ]
+}
