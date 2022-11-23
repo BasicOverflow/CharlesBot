@@ -16,6 +16,10 @@ __pycache__/
 # neuralintents json config files
 api/dependencies/intent_classification/*.json
 
+# st intent classification model & dataset
+api/dependencies/intent_classification/model
+api/dependencies/intent_classification/data
+
 # C extensions
 *.so
 
