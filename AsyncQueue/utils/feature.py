@@ -26,6 +26,9 @@ class Feature(object):
         # the coroutine itself'''
         
     def __init__(self, func: Callable, user_examples: List[str]) -> None:
+        if len(user_examples) < 3:
+            raise Exception("Must give at least 3 user query examples per feature")
+            
         self.func = func
         # print(inspect.getfullargspec(func))
         self.func_params = inspect.getfullargspec(func)[0]

@@ -4,151 +4,236 @@
 # sentence embeddings & bi-encoder moodels from 
 # huggingface
 #################################
-from typing import Dict
-from sentence_transformers import SentenceTransformer, losses, InputExample
+from typing import Dict, List, Union
+import os
+from sentence_transformers import SentenceTransformer, losses, InputExample, SentencesDataset, util
 from torch.utils.data import DataLoader
 import json
-
-
-# User provides label for intent & some example sentences for thst intent, gets stored on disk
-# store into json file:
-    # {
-    # tag1: [query1, query2, query3, etc],
-    # tag2: [query1, query2, query3, etc],
-    # }
-
-# For training, 2 options:
-    # OPTION 1:
-        # -Use supervised SimCSE to build entailment pairs from user examples, negative pairs with other combinations from dataset
-        # -train that way with MNR loss
-    # OPTION 2:
-        # -Use unsupervised method where we generate similar sentence embeddings for all examples using dropout
-        # train with that with MNR loss
-# use both methods to train model? Why not?
-# each time new intent is added, train model on that task only, need to keep track of which intents the model has trained on in another file
-# when building labaled pairs, include entialment pairs and include pairs with same sentences for unsup
-
-# For inference:
-    # -take query sentence, 
-    # -use Semantic Search to look for top n similar sentences in latent space (via cosine sim)
-    # -and see which intent they're from, return corresponding label
+import math
+from requests.exceptions import HTTPError
 
 
 
+class ModelNotLoadedError(Exception): pass
 
-class IntentClassifierModel(object):
+
+
+class ST_IntentClassifier(object):
     """Loads specified model from local dir/huggingface. Provides API for training with new examples & inferencing"""
 
     def __init__(self, 
                 base_model="multi-qa-MiniLM-L6-cos-v1",
-                training_batch_size=32, 
-                training_epochs=3, 
-                model_name="", 
-                model_save_path="./model",
-                train_dataset_path="./data/intents_data.json",
-                trained_intents_path="./data/trained_intents.txt"
+                training_batch_size=16, 
+                training_epochs=10, 
+                model_name="CharlesBotST_intent_classifier", 
+                model_save_path="model",
+                train_dataset_path="data/intents_data.json",
+                trained_intents_path="/data/trained_intents.txt" # list of tags already trained (\n seperated)
                 ):
+        self.root = os.path.dirname(__file__)        
         self.base_model = base_model
         self.model = None
         self.training_batch_size = training_batch_size
         self.training_epochs = training_epochs
-        self.model_save_path = model_save_path
+        self.model_save_path = os.path.join( self.root, model_save_path )
+        # self.model_save_path = f"{self.root}/{model_save_path}/{model_name}"
         self.train_dataset_path = train_dataset_path
         self.model_name = model_name
-        self.trained_intents_path = trained_intents_path
+        self.trained_intents_path = trained_intents_path # to save what intent have already been trained so repeat training gets avoided
+        
+        # create dataset & model paths if they don't exist (in redundancy we trust)
+        if not os.path.exists( self.model_save_path ):
+            os.mkdir( self.model_save_path )
+        
+        if not os.path.exists( os.path.join( self.model_save_path, self.model_name) ):
+            os.mkdir( os.path.join( self.model_save_path, self.model_name) )
+
+        if not os.path.exists( os.path.join(self.root, "data") ):
+            os.mkdir( os.path.join(self.root, "data") )
+        
+        if not os.path.exists( os.path.join(self.root, "data", "already_trained_intents.txt") ):
+            open( os.path.join(self.root, "data", "already_trained_intents.txt"), "w+" ).close()
+
+    ### API METHODS ###
 
     def load_model(self) -> None:
         """Loads fine-tuned model from local disk"""
-        self.model = SentenceTransformer(self.model_save_path)
+        # Check if there is no model and load base model if thats the case
+        try:
+            self.model = SentenceTransformer(os.path.join( self.model_save_path, self.model_name))
+        except (HTTPError, OSError):
+            print(f"No locally trained model found, defaulting to base model: {self.base_model}")
+            self.model = SentenceTransformer(self.base_model)
 
     def save_model(self) -> None:
-        """"""
-        self.model.save(self.model_save_path)
+        """Saves trained model onto disk"""
+        if self.model is None: raise ModelNotLoadedError(f"Must call {self}.load_model() beforehand")
+        self.model.save(path=os.path.join( self.model_save_path, self.model_name))
 
-    def train_from_file(self) -> None:
-        """Train any new intents present in dataset"""
+    def train_model(self) -> None:
+        """Re-train model on current intents data on disk"""
+        if self.model is None: raise ModelNotLoadedError(f"Must call {self}.load_model() beforehand")
+        dataset = self._load_dataset()
+        parsed_dataset,_ = self._parse_dataset(dataset)
+        self._CosineSimilarity_train_loop(parsed_dataset, dataset)
+
+    def request(self, msg: str) -> Union[str, None]:
+        """Inference Using Semantic search"""
+        if self.model is None: raise ModelNotLoadedError(f"Must call {self}.load_model() beforehand")
+        
+        return self._inference(msg) # returns None if query cannot be determines
+
+    ### API METHODS ###
+
+    def _TripletLosss_train_loop(self, dataset: Dict) -> None:
+        """Trains model with given dataset using following loss: https://www.sbert.net/docs/package_reference/losses.html#tripletloss"""
         pass
 
-    def load_dataset(self) -> Dict:
-        """"""
-        data = json.load(self.train_dataset_path)
+    def _CosineSimilarity_train_loop(self, dataset: Dict, full_dataset: Dict) -> None:
+        """Trains model with given dataset using following loss: https://www.sbert.net/docs/package_reference/losses.html#cosinesimilarityloss
+        if x total queries present in entire dataset, will produce x^2 training examples for model"""
+        # dataset = json where previously trained intents are parsed out, full_dataset == all intents
+        if dataset == {}: 
+            print("Received empty dataset, skipping out on training...")
+            return
+
+        ### CONSTRUCT TRAINING EXAMPLES ###
+
+        training_examples = [] # construct series of tuples: (sent1, sent2, cosSimScore)
+
+        for tag in dataset.keys():
+            example_queries = dataset[tag]
+
+            # add examples where: (sent_i, sent_j, 1) for i != j in dataset
+            for i in example_queries:
+                for j in example_queries:
+                    training_examples.append(
+                        (i, j, 1) # entailment pairs
+                    )
+
+            # add examples where: (sent_i, sent_j, -1) where sent_i in example queries AND sent_j in all other intent queries
+
+            all_other_examples = [] # construct flat array of all other queries
+            for other_tag in [i for i in full_dataset.keys() if i != tag]:
+                all_other_examples.extend(full_dataset[other_tag])
+
+            # construct samples
+            for i in example_queries:
+                for j in all_other_examples:
+                    training_examples.append(
+                        (i, j, -1) # contradiction pairs
+                    )
+
+        ### BUILD DATALOADER TO PREP DATA FOR FEEDING INTO MODEL ###
+
+        train_examples = [InputExample(texts=[e[0], e[1]], label=float(e[2])) for e in training_examples]
+        train_dataset = SentencesDataset(train_examples, self.model)
+        train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=self.training_batch_size)
+
+        ### ESTABLISH LOSS ###
+
+        train_loss = losses.CosineSimilarityLoss(model=self.model)
+
+        ### TRAIN MODEL WITH TRAINING SAMPLES ###
+        
+        # 10% of train data for warmup steps
+        warmup_steps = int(math.ceil(len(train_dataloader) * self.training_epochs * 0.1))
+
+        # Tune the model
+        self.model.fit(
+            train_objectives=[(train_dataloader, train_loss)],
+            epochs=self.training_epochs,
+            warmup_steps=warmup_steps,
+        )
+        
+    def _load_dataset(self) -> Dict:
+        """Structure on disk:
+            {
+            tag1: [query1, query2, query3, etc],
+            tag2: [query1, query2, query3, etc],
+            }
+        """
+        data = json.load(open(os.path.join(self.root, self.train_dataset_path), "r"))
+        return data
+
+    def _parse_dataset(self, dataset):
+        """Returns dataset containing only new data that the model hasn't trained on. Uses trained_intents.txt for this"""
+        with open(f"{self.root}\data\\already_trained_intents.txt", "r+") as f:
+            lines = f.readlines()
+            already_trained_tags = [line.replace("\n","") for line in lines]
+            f.close()
+
+        not_trained_tags = [i for i in dataset.keys() if i not in already_trained_tags] 
+        parsed_dataset = {i:dataset[i] for i in not_trained_tags}
+
+        # update trained intents txt file
+        with open(f"{self.root}\data\\already_trained_intents.txt", "a") as f:
+            for tag in parsed_dataset.keys():
+                f.write(f"{tag}\n")
+            f.close()
+
+        print(f"Parsed DS: {parsed_dataset}")
+        return parsed_dataset, dataset
+
+    def _inference(self, query, k=3, min_threshold=0.6):
+        """Uses semantic search to see what training samples cluster closest to the query msg in the model's latent space. Take top k closest samples and returns the tag they are from.
+        From: https://www.sbert.net/examples/applications/semantic-search/README.html"""
+        dataset = self._load_dataset()
+
+        # get flat array of all user example sentences used for training
+        corpus = [] 
+        for samples in dataset.values(): corpus.extend(samples)
+        
+        # encode all sentences
+        corpus_embeddings = self.model.encode(corpus, convert_to_tensor=True)
+        
+        # determine topk value
+        top_k = min(k, len(corpus))
+
+        # encode query
+        query_embedding = self.model.encode(query, convert_to_tensor=True)
+
+        # Perform search and get top hits
+        hits = util.semantic_search(query_embedding, corpus_embeddings, top_k=top_k)[0]
+
+        # debug
+        # for hit in hits:
+        #     hit_sentence = corpus[hit["corpus_id"]]
+        #     score = hit["score"]
+        #     print(hit_sentence, hit["score"])
+
+        # out of the top k, grab ones that only scored above the minimum threshold
+        hits = [i for i in hits if i["score"] >= min_threshold]
+        hit_sentences = [corpus[hit["corpus_id"]] for hit in hits]
+        
+        # if no sentences remain that scored above the threshold, assume model cannot determine intent
+        if hits == []: return None
+
+        # check which intent these sentences fall under, and return the tag of that intent, 
+        # if these remaining sentences do not all come from the same intent, assume model cannot determine intent 
+        for tag in dataset.keys():
+            intent_sentences = dataset[tag]
+            if all(x in intent_sentences for x in hit_sentences): # yay a match
+                return tag
+
+        return None # model cannot accurately determine tag
+        
+
+if __name__ == "__main__":
+    # open("./data/poo.txt", "w+")
+    test = ST_IntentClassifier()
+    test.load_model()
+    # test.train_model()
+    # test.save_model()
+
+    import time
+    start = time.time()
+    # test._inference("do the test feature for the client websocket")
+    tag = test._inference("Charles why dont you do me a solid and run me that websocket test")
+    print(f"Prediction: {tag}")
+    print(f"{time.time() - start} seconds")
 
 
 
 
 
-
-
-# =========================================================
-# Use multipleNegativesRankingLoss to train model using
-# only entailment/contradiction pairs
-# =========================================================
-# from sentence_transformers import SentenceTransformer, InputExample
-# from sentence_transformers.losses import MultipleNegativesRankingLoss
-# from sentence_transformers.evaluation import EmbeddingSimilarityEvaluator
-# from preprocess_data import *
-# import math
-# import random
-
-
-# def train_loop(
-#     base_model_name,
-#     model_name,
-#     model_save_path,
-#     batch_size,
-#     num_epochs,
-#     labeled_pairs_func,
-#     mappings_func,
-#     train_validation_mode=True,
-# ):
-#     """Simulate SimCSE w/ MultipleNegativesRankingLoss and generate negative pairs from entailment batch"""
-#     # https://www.sbert.net/docs/package_reference/losses.html#multiplenegativesrankingloss
-
-#     model = SentenceTransformer(base_model_name)
-
-#     # parse train data to produce activity->form title mappings
-#     mappings = mappings_func()
-
-#     # take mappings and produce labeled entailment pairs with cos sim score
-#     labeled_pairs = labeled_pairs_func(mappings)
-
-#     # create train/test split
-#     if train_validation_mode:
-#         train_pairs = labeled_pairs[: int(-len(labeled_pairs) * 0.2)]
-#         test_pairs = labeled_pairs[int(len(labeled_pairs) * 0.8) :]
-#     else:
-#         train_pairs = labeled_pairs
-
-#     # build dataloader with train examples of labeled pairs
-#     train_dataloader = produce_train_dataloader(train_pairs, batch_size=batch_size)
-
-#     # use MNRL loss, will automatically generate negative pairs from entailment batch
-#     train_loss = MultipleNegativesRankingLoss(model=model)
-
-#     # 10% of train data for warmup steps
-#     warmup_steps = int(math.ceil(len(train_dataloader) * num_epochs * 0.1))
-
-#     # Tune the model
-#     model.fit(
-#         train_objectives=[(train_dataloader, train_loss)],
-#         epochs=num_epochs,
-#         warmup_steps=warmup_steps,
-#     )
-#     # save to file
-#     model.save(
-#         path=f"{model_save_path}/{model_name}",  # model_name=model_name
-#     )
-
-#     if train_validation_mode:
-#         # evaluate model
-#         test_pairs = [InputExample(texts=[t[0], t[1]], label=t[-1]) for t in test_pairs]
-#         evaluator = EmbeddingSimilarityEvaluator.from_input_examples(
-#             test_pairs,
-#             batch_size=batch_size,
-#         )
-#         eval_ = evaluator(model)
-#         with open("res.txt", "a") as f:
-#             f.write(f"Eval score for {model_name}: {eval_}\n")
-#             f.close()
-
-#         print(f"Eval score for {model_name}: {eval_}")
