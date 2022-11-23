@@ -175,7 +175,7 @@ class ST_IntentClassifier(object):
         print(f"Parsed DS: {parsed_dataset}")
         return parsed_dataset, dataset
 
-    def _inference(self, query, k=3, min_threshold=0.6):
+    def _inference(self, query, k=3, min_threshold=0.6) -> Union[None, str]:
         """Uses semantic search to see what training samples cluster closest to the query msg in the model's latent space. Take top k closest samples and returns the tag they are from.
         From: https://www.sbert.net/examples/applications/semantic-search/README.html"""
         dataset = self._load_dataset()
