@@ -15,6 +15,9 @@ from fastapi import WebSocket
         #imediately, declare a ws_handler.recv() under the send
         #repeat this as desired
 
+#NOTE: IT MUST BE KNOWN THAT THE MAIN FUNCTION PASSED IN TO FEATURE MUST HAVE A UNIQE NAME IN COMPARISON TO THE OTHER FEATURE FUNCTIONS,
+    # bc function name is used as tag that represents the feature in training dataset for intent classifier
+
 root_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "api\dependencies\intent_classification")
 
 
@@ -27,7 +30,7 @@ class Feature(object):
         
     def __init__(self, func: Callable, user_examples: List[str]) -> None:
         if len(user_examples) < 3:
-            raise Exception("Must give at least 3 user query examples per feature")
+            raise Exception("Must give at least 3 user query examples per feature. It is recommended to add 3+ diverse examples")
             
         self.func = func
         # print(inspect.getfullargspec(func))
@@ -50,7 +53,7 @@ class Feature(object):
 
         # load content of file
         intents = json.load(open(file,"r"))
-        print(intents)
+        # print(intents)
 
         #check if the tag is brand new
         tags = intents.keys()

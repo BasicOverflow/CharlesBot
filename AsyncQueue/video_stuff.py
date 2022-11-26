@@ -140,17 +140,15 @@ async def display_video(client_id: str, ws_handler: WebSocket) -> None:
 # # #  Where feature objects are created to be imported by main.py  # # #
 
 video_displayer = Feature(display_video,    
-    "display video",
     [
     "Show me the live video feed of living room",
     "Pull up the live video display of some client",
     "Display the live video of laptop",
-    "Show the video for Node1"
+    "Show the video for Node 1"
     ]
 )
 
 video_keeper = Feature(keep_video,
-    "save video",
     [
     "archive the next 5 minutes of video",
     "save the past 2 hours of video",
@@ -161,9 +159,9 @@ video_keeper = Feature(keep_video,
 
 
 video_purger = Feature(filter_archived_video,
-    "delete old video",
     [
     "Delete outdated video files",
-    "Remove old video files"
+    "Remove old video files",
+    "Get rid of the old archived video files"
     ]
 )

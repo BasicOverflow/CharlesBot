@@ -99,11 +99,12 @@ async def system_diagnostics(ws_handler: WebSocket) -> None:
 
 
 system_diagnostics = Feature(system_diagnostics,
-    "System Diagnostics",
     [
     "perform system diagnostics", 
     "Run diagnostics",
-    "do system diagnostics"
+    "do system diagnostics",
+    "go ahead and run system diagnostics for me",
+    "run the system check",
     ]
 )
 

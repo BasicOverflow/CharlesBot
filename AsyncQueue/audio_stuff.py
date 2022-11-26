@@ -201,18 +201,16 @@ async def filter_archived_audio(timegap: int = 12) -> None:
 # # #  feature objects to be imported by main.py  # # #
 
 audio_displayer = Feature(display_audio,
-    "display audio",
     [
     "Show me the live audio feed of living room",
-    "Pull up the live audio display of some client",
-    "Display the live audio of laptop",
-    "Show the audio for Node1"
+    "Pull up the live audio display of some node 4",
+    "Display the live audio of the laptop",
+    "Show the audio for Node 1"
     ]
 )
 
 
 audio_keeper = Feature(keep_audio,
-    "save video",
     [
     "archive the next 5 minutes of audio",
     "save the past 2 hours of audio",
@@ -223,10 +221,10 @@ audio_keeper = Feature(keep_audio,
 
 
 audio_purger = Feature(filter_archived_audio,
-    "delete old audio",
     [
     "Delete outdated audio files",
-    "Remove old audio files"
+    "Remove old audio files",
+    "Get rid of those unsaved audio files"
     ]
 )
 

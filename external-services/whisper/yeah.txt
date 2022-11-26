@@ -1,0 +1,8 @@
+https://github.com/openai/whisper#available-models-and-languages
+
+https://github.com/shirayu/whispering
+
+https://github.com/saharmor/whisper-playground
+
+https://github.com/appvoid/vosper/blob/main/listener.py
+

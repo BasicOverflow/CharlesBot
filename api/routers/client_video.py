@@ -13,7 +13,8 @@ from starlette.websockets import WebSocketDisconnect
 router = APIRouter() 
 
  #api configuration settings
-settings = yaml.safe_load(open("./settings.yaml")) 
+root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+settings = yaml.safe_load(open(os.path.join(root, "settings.yaml"))) 
 video_file_path = settings["video_storage_root_path"] #Directory to store video data
 
 

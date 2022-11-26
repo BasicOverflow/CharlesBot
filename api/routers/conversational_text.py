@@ -88,6 +88,7 @@ async def convo_text(websocket: WebSocket, client_name: str):
                 if "worker" in item.keys():
                     #log new response
                     await session.log_worker_phrase(item["queue"])
+        print("yeah")
 
 
     except (WebSocketDisconnect, ConnectionClosedError):
@@ -97,7 +98,7 @@ async def convo_text(websocket: WebSocket, client_name: str):
         print(f"Detected disconnect in client {client_id}'s audio endpoint. Therefore, disconnecting associated conversational_text (for audio) endpoint as well.")
     
     else:
-        print("Misc error with convo text endpoint")
+        print("Misc error with convo text endpoint. No error raised, function just terminated")
 
     finally:
         #shut down command session and disconnect
@@ -178,6 +179,5 @@ async def convo_text_browser(websocket: WebSocket, client_name: str):
         websocket.app.command_manager.deactivate_session(client_id)
         websocket.app.manager.disconnect(websocket)
         print(f"Conversational text endpoint for client {client_id} disconnected")
-
 
 

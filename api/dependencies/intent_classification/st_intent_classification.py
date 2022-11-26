@@ -81,7 +81,12 @@ class ST_IntentClassifier(object):
         """Inference Using Semantic search"""
         if self.model is None: raise ModelNotLoadedError(f"Must call {self}.load_model() beforehand")
         
-        return self._inference(msg) # returns None if query cannot be determines
+        pred = self._inference(msg)
+        if pred is None:
+            # returns unknown if query cannot be determined
+            return "unknown"
+
+        return pred 
 
     ### API METHODS ###
 

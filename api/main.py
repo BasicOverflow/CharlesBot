@@ -2,6 +2,7 @@ from multiprocessing import cpu_count
 import uvicorn
 import asyncio
 import yaml
+import os
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,7 +32,7 @@ app.include_router(convo_text)
 app.include_router(worker_comm)
 
 #api configuration settings
-settings = yaml.safe_load(open("./settings.yaml")) 
+settings = yaml.safe_load(open( os.path.join(os.path.dirname(os.path.dirname(__file__)), "settings.yaml") )) 
 
 # websocket connection manager
 app.manager = ConnectionManager()
@@ -61,7 +62,7 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    '''In production, returns name of client? Or some static web page w/ details, instructions, current connected client stats, etc'''
+    '''In production, returns name of client? Or some static (dynamic) web page w/ details, instructions, current connected client stats, etc'''
     return "Poop, stank even"
 
 @app.get("/debug", response_class=HTMLResponse)
