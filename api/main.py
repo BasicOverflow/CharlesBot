@@ -90,6 +90,12 @@ async def init_state_manager():
     app.state_manager.init_manager()
 
 @app.on_event("startup")
+async def ws_redundancy_manager():
+    """Starts continuous coroutine from StateManager that monitors for redundant connections after client disconnects. 
+    (Uses state manager so must be started after state manager init!)"""
+    asyncio.create_task(app.manager.redundancy_manager(app))
+
+@app.on_event("startup")
 async def init_external_transcription_handler():
     '''Starts a dispatcher coroutine that monitors new clients and gives them resources to to transcribe incoming audio'''
     asyncio.create_task(

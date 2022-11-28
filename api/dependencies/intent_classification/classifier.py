@@ -11,6 +11,7 @@ from dependencies.intent_classification.st_intent_classification import ST_Inten
 async def monitor_dataset(classifier) -> None:
     prev_dataset = classifier.query_dataset()
     while True:
+        #TODO: use locig from ST_classifiermodel to look for changes in dataset (parsed_DS)
         curr_dataset = classifier.query_dataset()
 
         if curr_dataset != prev_dataset:

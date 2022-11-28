@@ -180,7 +180,7 @@ class ST_IntentClassifier(object):
         print(f"Parsed DS: {parsed_dataset}")
         return parsed_dataset, dataset
 
-    def _inference(self, query, k=3, min_threshold=0.6) -> Union[None, str]:
+    def _inference(self, query, k=3, min_threshold=0.7) -> Union[None, str]:
         """Uses semantic search to see what training samples cluster closest to the query msg in the model's latent space. Take top k closest samples and returns the tag they are from.
         From: https://www.sbert.net/examples/applications/semantic-search/README.html"""
         dataset = self._load_dataset()
@@ -202,10 +202,10 @@ class ST_IntentClassifier(object):
         hits = util.semantic_search(query_embedding, corpus_embeddings, top_k=top_k)[0]
 
         # debug
-        # for hit in hits:
-        #     hit_sentence = corpus[hit["corpus_id"]]
-        #     score = hit["score"]
-        #     print(hit_sentence, hit["score"])
+        for hit in hits:
+            hit_sentence = corpus[hit["corpus_id"]]
+            score = hit["score"]
+            print(hit_sentence, hit["score"])
 
         # out of the top k, grab ones that only scored above the minimum threshold
         hits = [i for i in hits if i["score"] >= min_threshold]
@@ -225,18 +225,17 @@ class ST_IntentClassifier(object):
         
 
 if __name__ == "__main__":
-    # open("./data/poo.txt", "w+")
     test = ST_IntentClassifier()
     test.load_model()
     # test.train_model()
     # test.save_model()
 
-    import time
-    start = time.time()
     # test._inference("do the test feature for the client websocket")
-    tag = test._inference("Charles why dont you do me a solid and run me that websocket test")
+    # tag = test._inference("Charles why dont you do me a solid and run me that websocket test")
+    # tag = test._inference("wow i am saying a test sentence")
+    tag = test._inference("Hey charles show me live audio from the bathroom")
     print(f"Prediction: {tag}")
-    print(f"{time.time() - start} seconds")
+
 
 
 

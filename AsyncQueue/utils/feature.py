@@ -30,12 +30,12 @@ class Feature(object):
         
     def __init__(self, func: Callable, user_examples: List[str]) -> None:
         if len(user_examples) < 3:
-            raise Exception("Must give at least 3 user query examples per feature. It is recommended to add 3+ diverse examples")
+            raise Exception("Must give at least 3 user query examples per feature. It is recommended to add as many diverse examples as possible")
             
         self.func = func
         # print(inspect.getfullargspec(func))
         self.func_params = inspect.getfullargspec(func)[0]
-        tag = func.__name__
+        tag = self.func_name = func.__name__ 
         #call method to update intent.json in constructor
         self.update_intents(tag, user_examples)
     
