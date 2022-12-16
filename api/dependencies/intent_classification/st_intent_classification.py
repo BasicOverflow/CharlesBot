@@ -180,7 +180,7 @@ class ST_IntentClassifier(object):
         print(f"Parsed DS: {parsed_dataset}")
         return parsed_dataset, dataset
 
-    def _inference(self, query, k=3, min_threshold=0.7) -> Union[None, str]:
+    def _inference(self, query, k=3, min_threshold=0.5) -> Union[None, str]:
         """Uses semantic search to see what training samples cluster closest to the query msg in the model's latent space. Take top k closest samples and returns the tag they are from.
         From: https://www.sbert.net/examples/applications/semantic-search/README.html"""
         dataset = self._load_dataset()
@@ -201,27 +201,36 @@ class ST_IntentClassifier(object):
         # Perform search and get top hits
         hits = util.semantic_search(query_embedding, corpus_embeddings, top_k=top_k)[0]
 
+        # isolate sentences
+        hit_sentences = [corpus[hit["corpus_id"]] for hit in hits]
+
+        # get average score of top hits
+        sum_ = 0 
+        for i in hits: sum_ += i["score"]
+        final_score = sum_ / len(hits)
+
         # debug
         for hit in hits:
             hit_sentence = corpus[hit["corpus_id"]]
             score = hit["score"]
             print(hit_sentence, hit["score"])
+        print(f"Average score of top hits: {final_score:0.2f}")
 
-        # out of the top k, grab ones that only scored above the minimum threshold
-        hits = [i for i in hits if i["score"] >= min_threshold]
-        hit_sentences = [corpus[hit["corpus_id"]] for hit in hits]
-        
-        # if no sentences remain that scored above the threshold, assume model cannot determine intent
-        if hits == []: return None
+        # check if average score meets minimum threshold, if not, no match found
+        if final_score < min_threshold: return None
 
-        # check which intent these sentences fall under, and return the tag of that intent, 
-        # if these remaining sentences do not all come from the same intent, assume model cannot determine intent 
+        # otherwise, check which intent these sentences fall under, and return the tag of that intent, 
+        # if these remaining sentences do not all come from the same intent, assume model cannot determine intent: return None
         for tag in dataset.keys():
             intent_sentences = dataset[tag]
-            if all(x in intent_sentences for x in hit_sentences): # yay a match
-                return tag
+            matches = 0
+            for sentence in hit_sentences:
+                if sentence in intent_sentences: matches += 1
+            
+            # check to see if at lease 2/3 of the hit sentences mapped to a tag, if so consider it a match
+            if matches >= round(len(hit_sentences) * (2/3)): return tag
 
-        return None # model cannot accurately determine tag
+        return None 
         
 
 if __name__ == "__main__":
@@ -230,10 +239,12 @@ if __name__ == "__main__":
     # test.train_model()
     # test.save_model()
 
-    # test._inference("do the test feature for the client websocket")
+    # tag = test._inference("do the test feature for the client websocket")
     # tag = test._inference("Charles why dont you do me a solid and run me that websocket test")
     # tag = test._inference("wow i am saying a test sentence")
-    tag = test._inference("Hey charles show me live audio from the bathroom")
+    # tag = test._inference("Hey charles skhow me live audio from the bathroom")
+    # tag = test._inference("Hey Chalres dump some fecal matter down")
+    tag = test._inference("I am a camera man recording some audio")
     print(f"Prediction: {tag}")
 
 
