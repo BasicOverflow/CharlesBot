@@ -72,13 +72,9 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # asyncio.run(main())
 
-
-
-
-
-    # for testing on local mic
+    # # for testing on local mic
     # import pyaudio
     # mic = pyaudio.PyAudio()
     # stream = mic.open(
