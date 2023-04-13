@@ -4,7 +4,7 @@
 # sentence embeddings & bi-encoder moodels from 
 # huggingface
 #################################
-from typing import Dict, List, Union
+from typing import Dict, Union
 import os
 from sentence_transformers import SentenceTransformer, losses, InputExample, SentencesDataset, util
 from torch.utils.data import DataLoader
@@ -54,6 +54,11 @@ class ST_IntentClassifier(object):
         if not os.path.exists( os.path.join(self.root, "data", "already_trained_intents.txt") ):
             open( os.path.join(self.root, "data", "already_trained_intents.txt"), "w+" ).close()
 
+        if not os.path.exists( os.path.join(self.root, self.train_dataset_path) ):
+            with open( os.path.join(self.root, self.train_dataset_path), "w+" ) as f:
+                f.write("{}") # valid json file can't be empty
+                f.close()
+
     ### API METHODS ###
 
     def load_model(self) -> None:
@@ -67,7 +72,7 @@ class ST_IntentClassifier(object):
 
     def save_model(self) -> None:
         """Saves trained model onto disk"""
-        if self.model is None: raise ModelNotLoadedError(f"Must call {self}.load_model() beforehand")
+        if self.model is None: raise ModelNotLoadedError(f"Attempting to save mdoel that hasnt been loaded into memory. Must call {self}.load_model() beforehand")
         self.model.save(path=os.path.join( self.model_save_path, self.model_name))
 
     def train_model(self) -> None:

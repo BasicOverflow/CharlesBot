@@ -23,14 +23,9 @@ class ConnectionManager:
             # 1.) Monitor for when audio ws is disconnected but the convo text ws is still present
 
             all_clients = app.state_manager.all_states(tails_only=True)
-            print(all_clients)
+            # print(all_clients)
 
-            await asyncio.sleep(1
-            
-            
-            
-            
-            )
+            await asyncio.sleep(1)
 
     async def connect(self, websocket: WebSocket) -> None:
         await websocket.accept()

@@ -1,0 +1,13 @@
+protobuf==3.20 # right now sentece_transformers requires this specific version to work
+uvicorn
+PyYAML
+fastapi
+pydantic
+websockets
+motor
+sentence-transformers
+requests
+torch
+opencv-python
+aiostream
+colorama

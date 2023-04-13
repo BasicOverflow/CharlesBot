@@ -126,13 +126,8 @@ if __name__ == "__main__":
     num_workers = (2* cpu_count()) + 1
     uvicorn.run(  
         "main:app",
-        host=settings["host_ip"],
+        host="0.0.0.0",
         reload=True,
-        port=settings["host_port"],
+        port=80,
         workers=num_workers
     )
-
-    
-
-
-

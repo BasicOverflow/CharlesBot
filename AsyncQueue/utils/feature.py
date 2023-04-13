@@ -49,7 +49,11 @@ class Feature(object):
         
         # ensure file exists
         if not os.path.isfile(file):
-            open(file, "w").close()
+            try:
+                open(file, "w").close()
+            except FileNotFoundError:
+                print("ERROR:   Intent Classification not instantiated. Must let api run first so that proper directories are built before starting the AsyncQueue")
+                return
 
         # load content of file
         intents = json.load(open(file,"r"))
