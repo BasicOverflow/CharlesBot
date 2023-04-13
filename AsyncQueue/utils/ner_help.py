@@ -50,7 +50,6 @@ class NamedEntityExtractor(object):
             else:
                 self.misc.append( (ent.text, ent.label_) )
 
-
     def extract_persons(self) -> List[str]: return self.persons
 
     def extract_places(self) -> List[str]: return self.places

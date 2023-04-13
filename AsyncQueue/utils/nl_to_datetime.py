@@ -12,5 +12,5 @@ def parse_string_date(phrase: str) -> datetime:
 
 
 if __name__ == "__main__":
-    x = parse_string_date("in four days")
+    x = parse_string_date("four days ago")
     print(x)

@@ -25,7 +25,12 @@ class ConnectionManager:
             all_clients = app.state_manager.all_states(tails_only=True)
             print(all_clients)
 
-            await asyncio.sleep(3)
+            await asyncio.sleep(1
+            
+            
+            
+            
+            )
 
     async def connect(self, websocket: WebSocket) -> None:
         await websocket.accept()
