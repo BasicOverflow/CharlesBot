@@ -22,11 +22,8 @@ def worker(text, aug):
 
 def produce_augmentations(texts, use_clare=True) -> List[str]:
     """Takes in list of phrases, spits out augmented verisons of each phrase in the list. 
-<<<<<<< HEAD
-    Might take several minutes, takes even more time when use_clare=True, however will make intent classifier more accurate"""
-=======
-        Use Clare utilizes best performing model to produce augmentations but takes a lot longer."""
->>>>>>> ab291fb1aad0bddf832f7e3bcbc250fe6aff5433
+    Might take several minutes, takes even more time when use_clare=True, however will make intent classifier more accurate
+    Use Clare utilizes best performing model to produce augmentations but takes a lot longer."""
     auged_text = []
     processes = []
 
