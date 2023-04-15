@@ -2,8 +2,8 @@ FROM python:3.11
 
 WORKDIR /code
 
-# Install dependencies (including dependency for cv2)
-RUN apt-get update && apt-get install -y libgl1-mesa-glx
+# Install dependencies 
+RUN apt-get update 
 
 # Copy requirements
 COPY ./requirements.txt /code/requirements.txt
@@ -12,4 +12,4 @@ COPY ./requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 # Start the application
-CMD ["python3", "/code/api/main.py"]
+CMD ["python3", "/code/AsyncQueue/main.py"]

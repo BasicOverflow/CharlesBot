@@ -1,3 +1,5 @@
+host_ip: "api"
+host_port: 8080
 video_storage_root_path: 'C:\Users\Peter\Desktop\video'
 audio_storage_root_path: 'C:\Users\Peter\Desktop\audio'
 asr_model_path: r'C:\Users\peter\Desktop\CharlesBot\external-services\speech-transcription\models\vosk-model-small-en-us-0.15'

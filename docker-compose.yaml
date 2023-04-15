@@ -3,14 +3,25 @@ version: "3"
 # DISCLAIMER: do not change service names willy nilly, dockerfiles depend on them 
 
 services:
+
+  asyncqueue:
+    restart: unless-stopped
+    build:
+      context: ./AsyncQueue
+      dockerfile: Dockerfile
+    volumes:
+      - .:/code
+    depends_on:
+      - api
+
   api:
+    restart: unless-stopped
     build:
       context: ./api
       dockerfile: Dockerfile
     volumes:
-      - ./api:/code/app
       - .:/code
     ports: 
       - 8080:80
-    environment:
-      PYTHONPATH: /code/app/api/dependencies
+
+  

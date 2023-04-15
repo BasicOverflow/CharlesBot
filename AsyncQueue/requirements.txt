@@ -1,0 +1,10 @@
+websockets
+colorama
+PyYAML
+fastapi
+spacy
+parsedatetime
+requests
+pandas
+tweepy
+textblob

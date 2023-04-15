@@ -30,7 +30,7 @@ class AsyncQueue(object):
         self.pending_tasks = []
 
         settings = yaml.safe_load(open(root_dir))
-        self.api = settings["host_ip"] + ":" + str(settings["host_port"])
+        self.api = settings["host_ip"] + ":" + "80"
 
     def init_async_loop(self) -> None:
         """This is where everything gets initiated. All asynchronous event loops are triggered/reset here and all coroutines are added here. Additonally all async arrays/vars are defined here.
@@ -113,6 +113,7 @@ class AsyncQueue(object):
                 await self._ws_api_client(uri)
             except Exception as e:
                 print(f"{Fore.RED}Queue unable to connect with API: {Fore.WHITE}{e}. Trying again...")
+                await asyncio.sleep(1)
 
     def ws_duplex_comm_client(self, client_url: str) -> None:
         """Decorator that wraps a ws client around a given function to communicate results/further inqueries to api"""

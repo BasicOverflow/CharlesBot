@@ -3,8 +3,7 @@ import asyncio
 import yaml
 #Console Window stuff
 import sys, os
-from subprocess import Popen, PIPE, CREATE_NEW_CONSOLE
-import json
+from subprocess import Popen, PIPE #,CREATE_NEW_CONSOLE
 
 from fastapi import WebSocket
 from utils.feature import Feature
@@ -19,74 +18,74 @@ PAST_PHRASES = ["past", "before", "last"]
 FUTURE_PHRASES = ["future", "following", "next", "proceeding"]
 
 
-class Console(Popen):
-    NumConsoles = 0
-    def __init__(self, color=None, title=None):
-        Console.NumConsoles += 1
+# class Console(Popen):
+#     NumConsoles = 0
+#     def __init__(self, color=None, title=None):
+#         Console.NumConsoles += 1
 
-        cmd = "import sys, os, locale"
-        cmd += "\nos.system(\'color " + color + "\')" if color is not None else ""
-        title = title if title is not None else "console #" + str(Console.NumConsoles)
-        cmd += "\nos.system(\"title " + title + "\")"
-        cmd += """
-print(sys.stdout.encoding, locale.getpreferredencoding() )
-endcoding = locale.getpreferredencoding()
-for line in sys.stdin:
-    sys.stdout.buffer.write(line.encode(endcoding))
-    sys.stdout.flush()
-"""
-        cmd = sys.executable, "-c", cmd
-        # print(cmd, end="", flush=True)
-        super().__init__(cmd, stdin=PIPE, bufsize=1, universal_newlines=True, creationflags=CREATE_NEW_CONSOLE, encoding='utf-8')
+#         cmd = "import sys, os, locale"
+#         cmd += "\nos.system(\'color " + color + "\')" if color is not None else ""
+#         title = title if title is not None else "console #" + str(Console.NumConsoles)
+#         cmd += "\nos.system(\"title " + title + "\")"
+#         cmd += """
+# print(sys.stdout.encoding, locale.getpreferredencoding() )
+# endcoding = locale.getpreferredencoding()
+# for line in sys.stdin:
+#     sys.stdout.buffer.write(line.encode(endcoding))
+#     sys.stdout.flush()
+# """
+#         cmd = sys.executable, "-c", cmd
+#         # print(cmd, end="", flush=True)
+#         super().__init__(cmd, stdin=PIPE, bufsize=1, universal_newlines=True, creationflags=CREATE_NEW_CONSOLE, encoding='utf-8')
 
-    def write_(self, msg):
-        try:
-            self.stdin.write(msg+"\n")
-        except TypeError: #Someone was probably trying to concactinate a list 
-            # Assuming msg is an array of some sort:
-            new_msg = f"{[str(i) for i in msg]}"
-            self.stdin.write(new_msg+"\n")
-        except:
-            self.stdin.write(str(msg)+"\n")
+#     def write_(self, msg):
+#         try:
+#             self.stdin.write(msg+"\n")
+#         except TypeError: #Someone was probably trying to concactinate a list 
+#             # Assuming msg is an array of some sort:
+#             new_msg = f"{[str(i) for i in msg]}"
+#             self.stdin.write(new_msg+"\n")
+#         except:
+#             self.stdin.write(str(msg)+"\n")
 
 
-async def display_audio(client_id: str) -> None:
-    '''If an instance of this runs the same time as archive_audio, it wont display everything. Im assuming bc two instanes on the same machine are making api calls at the same time.
-    to get around this, this function will try to log incoming phrases from the audio archives. If that fails (ie if its not running at the moment) it will resort to printing everything
-    it gets from API calls. replace(microsecond=0)'''
-    # https://stackoverflow.com/questions/287871/how-to-print-colored-text-to-the-terminal
-    # OKBLUE = '\033[94m'
-    # OKCYAN = '\033[96m'
-    # OKGREEN = '\033[92m'
-    # FAIL = '\033[91m'
-    global audio_directory
-    console = Console(color=None,title=f"Audio Channel from: {client_id}")
-    console.write_("\033[91m"+"WARNING: I just really wanted to use red text for something")
-    console.write_(f"\033[0mBeginning Audio Stream of \033[94m{client_id} \033[0mat \033[92m{datetime.now()} \033[0mEastern")
-    console.write_("")
-    poop = client_id.split("-")[0]
-    audio_directory = f"{audio_directory}/{poop}"
-    #Go through text achrives and constantly check for updates, display anything new
-    prev_last_line = ""
-    # print(audio_directory)
-    while True:
-        await asyncio.sleep(0.5)
-        datetimes = [datetime.strptime(i.split(".")[0],'%m-%d-%Y %I-%M %p') for i in os.listdir(audio_directory) if i.endswith(".txt")]
-        oldest_datetime_file = max(datetimes).strftime('%m-%d-%Y %I-%M %p') + ".txt" #Readable string date #most recent date
-        #read from file
-        with open(f"{audio_directory}/{oldest_datetime_file}", "r") as f:
-            try:
-                most_recent = f.readlines()[-1]
-            except:
-                continue
-            #if its still the same and nothing new has appeared, do nothing
-            if most_recent == prev_last_line:
-                pass
-            else: #display it and update prev_last_line
-                display = most_recent.strip('\n').split(":")[-1]
-                console.write_(f"\033[92m{datetime.now()}:\033[0m{display}")
-                prev_last_line = most_recent
-            f.close()
+# async def display_audio(client_id: str) -> None:
+#     '''If an instance of this runs the same time as archive_audio, it wont display everything. Im assuming bc two instanes on the same machine are making api calls at the same time.
+#     to get around this, this function will try to log incoming phrases from the audio archives. If that fails (ie if its not running at the moment) it will resort to printing everything
+#     it gets from API calls. replace(microsecond=0)'''
+#     # https://stackoverflow.com/questions/287871/how-to-print-colored-text-to-the-terminal
+#     # OKBLUE = '\033[94m'
+#     # OKCYAN = '\033[96m'
+#     # OKGREEN = '\033[92m'
+#     # FAIL = '\033[91m'
+#     global audio_directory
+#     console = Console(color=None,title=f"Audio Channel from: {client_id}")
+#     console.write_("\033[91m"+"WARNING: I just really wanted to use red text for something")
+#     console.write_(f"\033[0mBeginning Audio Stream of \033[94m{client_id} \033[0mat \033[92m{datetime.now()} \033[0mEastern")
+#     console.write_("")
+#     poop = client_id.split("-")[0]
+#     audio_directory = f"{audio_directory}/{poop}"
+#     #Go through text achrives and constantly check for updates, display anything new
+#     prev_last_line = ""
+#     # print(audio_directory)
+#     while True:
+#         await asyncio.sleep(0.5)
+#         datetimes = [datetime.strptime(i.split(".")[0],'%m-%d-%Y %I-%M %p') for i in os.listdir(audio_directory) if i.endswith(".txt")]
+#         oldest_datetime_file = max(datetimes).strftime('%m-%d-%Y %I-%M %p') + ".txt" #Readable string date #most recent date
+#         #read from file
+#         with open(f"{audio_directory}/{oldest_datetime_file}", "r") as f:
+#             try:
+#                 most_recent = f.readlines()[-1]
+#             except:
+#                 continue
+#             #if its still the same and nothing new has appeared, do nothing
+#             if most_recent == prev_last_line:
+#                 pass
+#             else: #display it and update prev_last_line
+#                 display = most_recent.strip('\n').split(":")[-1]
+#                 console.write_(f"\033[92m{datetime.now()}:\033[0m{display}")
+#                 prev_last_line = most_recent
+#             f.close()
 
 
 async def keep_audio(client_id: str, ws_handler: WebSocket) -> None:
@@ -200,14 +199,14 @@ async def filter_archived_audio(timegap: int = 12) -> None:
 
 # # #  feature objects to be imported by main.py  # # #
 
-audio_displayer = Feature(display_audio,
-    [
-    "Show me the live audio feed of living room",
-    "Pull up the live audio display of some node 4",
-    "Display the live audio of the laptop",
-    "Show the audio for Node 1"
-    ]
-)
+# audio_displayer = Feature(display_audio,
+#     [
+#     "Show me the live audio feed of living room",
+#     "Pull up the live audio display of some node 4",
+#     "Display the live audio of the laptop",
+#     "Show the audio for Node 1"
+#     ]
+# )
 
 
 audio_keeper = Feature(keep_audio,
