@@ -11,6 +11,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - .:/code
+      - ./video:/data/video
+      - ./audio:/data/audio
     depends_on:
       - api
 
@@ -21,6 +23,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - .:/code
+      - ./video:/data/video
+      - ./audio:/data/audio
     ports: 
       - 8080:80
 
